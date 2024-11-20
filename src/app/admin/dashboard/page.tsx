@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Layout from "@/components/Layout";
 
 export default function AdminDashboard() {
+  const [isLoading, setIsLoading] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
@@ -26,35 +27,31 @@ export default function AdminDashboard() {
         .eq("id", session.user.id)
         .single();
 
-      if (error || !userData || userData.role !== "admin") {
-        await supabase.auth.signOut();
+      if (error || userData?.role !== "admin") {
         router.push("/login");
         return;
       }
 
       setUser(userData);
+      setIsLoading(false);
     };
 
     checkUser();
   }, [router]);
 
-  if (!user) {
-    return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="text-center">Loading...</div>
+      </Layout>
+    );
   }
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Admin Dashboard
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Welcome, Admin {user.name}!
-          </p>
-        </div>
-        {/* Add more admin dashboard content here */}
-      </div>
+      <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
+      <p>Welcome, {user?.name || "Admin"}!</p>
+      {/* Add more dashboard content here */}
     </Layout>
   );
 }
