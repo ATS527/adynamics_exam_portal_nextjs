@@ -1,10 +1,18 @@
-import Navbar from "./Navbar";
+import { ReactNode } from "react";
+import { Navbar } from "./Navbar";
+import { UserNavbar } from "./UserNavbar";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+interface LayoutProps {
+  children: ReactNode;
+  isAdmin?: boolean;
+}
+
+export default function Layout({ children, isAdmin = false }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <main className="container mx-auto px-4 py-8">{children}</main>
+    <div className="min-h-screen flex flex-col">
+      {isAdmin ? <Navbar /> : <UserNavbar />}
+      <main className="flex-grow">{children}</main>
+      {/* Add footer if needed */}
     </div>
   );
 }

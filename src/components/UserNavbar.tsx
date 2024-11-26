@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
-export function Navbar() {
+export function UserNavbar() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -14,36 +14,36 @@ export function Navbar() {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const navItems = [
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/question-banks", label: "Question Banks" },
-    { href: "/admin/exams", label: "Exams" },
-    { href: "/admin/users", label: "Users" },
-  ];
-
   return (
     <nav className="bg-gray-800 text-white">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link href="/admin/dashboard" className="text-xl font-bold">
-              Exam Portal Admin
+            <Link href="/user/dashboard" className="text-xl font-bold">
+              Exam Portal
             </Link>
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      pathname === item.href
-                        ? "bg-gray-900 text-white"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                <Link
+                  href="/user/dashboard"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    pathname === "/user/dashboard"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  }`}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/user/profile"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    pathname === "/user/profile"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                  }`}
+                >
+                  Profile
+                </Link>
               </div>
             </div>
           </div>
@@ -76,19 +76,26 @@ export function Navbar() {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
-                  pathname === item.href
-                    ? "bg-gray-900 text-white"
-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            <Link
+              href="/user/dashboard"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                pathname === "/user/dashboard"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/user/profile"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                pathname === "/user/profile"
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
+              }`}
+            >
+              Profile
+            </Link>
             <Button
               variant="outline"
               onClick={() => {
