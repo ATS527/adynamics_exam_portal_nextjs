@@ -15,9 +15,9 @@ export function Navbar() {
   };
 
   const navItems = [
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/question-banks", label: "Question Banks" },
+    { href: "/admin/questions", label: "Question Banks" },
     { href: "/admin/exams", label: "Exams" },
+    { href: "/admin/dashboard", label: "Dashboard" },
     { href: "/admin/users", label: "Users" },
   ];
 
@@ -50,11 +50,12 @@ export function Navbar() {
           <div className="hidden md:block">
             <Button
               variant="outline"
+              className="text-white border-white hover:bg-white hover:text-gray-800 transition-colors"
               onClick={() => {
                 /* Add logout functionality */
               }}
             >
-              Logout
+              Sign Out
             </Button>
           </div>
           <div className="md:hidden">
@@ -94,9 +95,9 @@ export function Navbar() {
               onClick={() => {
                 /* Add logout functionality */
               }}
-              className="w-full mt-4"
+              className="w-full mt-4 text-white border-white hover:bg-white hover:text-gray-800 transition-colors"
             >
-              Logout
+              Sign Out
             </Button>
           </div>
         </div>

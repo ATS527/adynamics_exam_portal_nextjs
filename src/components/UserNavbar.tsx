@@ -49,7 +49,8 @@ export function UserNavbar() {
           </div>
           <div className="hidden md:block">
             <Button
-              variant="outline"
+              variant="ghost"
+              className="text-gray-300 hover:text-white hover:bg-gray-700"
               onClick={() => {
                 /* Add logout functionality */
               }}
@@ -97,11 +98,11 @@ export function UserNavbar() {
               Profile
             </Link>
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => {
                 /* Add logout functionality */
               }}
-              className="w-full mt-4"
+              className="w-full mt-4 text-gray-300 hover:text-white hover:bg-gray-700"
             >
               Logout
             </Button>

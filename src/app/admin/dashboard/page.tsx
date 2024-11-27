@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import Layout from "@/components/Layout";
+import { Loader2 } from "lucide-react";
 
 export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
@@ -41,17 +41,17 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <Layout>
-        <div className="text-center">Loading...</div>
-      </Layout>
+      <div className="flex justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
       <p>Welcome, {user?.name || "Admin"}!</p>
       {/* Add more dashboard content here */}
-    </Layout>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -92,8 +92,9 @@ const renderQuestionText = (text: string, variables: Record<string, number> | un
   })
 }
 
-export default function ExamTakingPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default function ExamTakingPage() {
+  const params = use('params')
+  const { id } = params
   const [exam, setExam] = useState<Exam | null>(null)
   const [staticOptions, setStaticOptions] = useState<Record<string, StaticOption[]>>({})
   const [dynamicQuestions, setDynamicQuestions] = useState<Record<string, DynamicQuestion>>({})
@@ -361,11 +362,20 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       if (attemptError) throw attemptError
 
       const questionResponses = Object.entries(answers).map(([questionId, userResponse]) => {
+        // Find the selected option text and correct answer
+        const question = exam.exam_questions.find(q => q.question_id === questionId)?.question
+        const options = question?.question_type === 'static' 
+          ? staticOptions[question.id] || []
+          : dynamicQuestions[question.id]?.options || []
+        const selectedOption = options.find(opt => opt.id === userResponse)
+        const correctOption = options.find(opt => opt.is_correct)
+        
         return {
           user_exam_attempt_id: attemptData.id,
           question_id: questionId,
-          selected_option_id: userResponse,
-          selected_time: new Date().toISOString()
+          user_response: selectedOption?.option_text || null,
+          correct_answer: correctOption?.option_text || null,
+          is_correct: selectedOption?.is_correct || null
         }
       })
 

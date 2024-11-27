@@ -7,16 +7,10 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 
-export default function UserLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const pathname = window.location.pathname
-
-  // Don't render user layout for admin routes
-  if (pathname.startsWith('/admin')) {
-    return <>{children}</>
-  }
 
   useEffect(() => {
     const checkSession = async () => {
@@ -30,7 +24,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           .eq('id', session.user.id)
           .single()
 
-        if (userError || userData.role !== 'user') {
+        if (userError || userData.role !== 'admin') {
           await supabase.auth.signOut()
           router.push('/login')
         } else {
@@ -73,12 +67,13 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div>
-      <nav className="bg-gray-800 text-white p-4">
+      <nav className="bg-gray-900 text-white p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <span>Exam Portal</span>
+          <span>Admin Portal</span>
           <div className="space-x-4">
-            <Link href="/user/dashboard" className="hover:underline">Dashboard</Link>
-            <Link href="/user/exams" className="hover:underline">Exams</Link>
+            <Link href="/admin/dashboard" className="hover:underline">Dashboard</Link>
+            <Link href="/admin/exams" className="hover:underline">Manage Exams</Link>
+            <Link href="/admin/questions" className="hover:underline">Question Bank</Link>
             <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
           </div>
         </div>
