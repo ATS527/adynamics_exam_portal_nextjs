@@ -126,7 +126,7 @@ export default function EditQuestionClient({
                     })
                   }
                   console.log('Formatted rules:', formattedRules)
-                  setOptionRules(formattedRules)
+                  setOptionRules(formattedRules as OptionRule[])
                 } else {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   setOptionRules(rules.map((rule: any) => ({

@@ -366,9 +366,9 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   const handlePreviousQuestion = () => {
     if (!isQuestionLocked && currentQuestionIndex > 0) {
       const prevIndex = currentQuestionIndex - 1
-      const prevQuestionId = exam.exam_questions[prevIndex].question.id
+      const prevQuestionId = exam?.exam_questions[prevIndex]?.question.id
       setCurrentQuestionIndex(prevIndex)
-      startForceTimerIfUnvisited(prevQuestionId)
+      if (prevQuestionId) startForceTimerIfUnvisited(prevQuestionId)
     }
   }
 
@@ -483,7 +483,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         const question = exam.exam_questions.find(q => q.question_id === questionId)?.question
         const options = question?.question_type === 'static' 
           ? staticOptions[question.id] || []
-          : dynamicQuestions[question.id]?.options || []
+          : dynamicQuestions?.[questionId]?.options || []
         const selectedOption = options.find(opt => opt.id === userResponse)
         const correctOption = options.find(opt => opt.is_correct)
         

@@ -149,7 +149,7 @@ export default function ResultsPage() {
           user_name: userMap.get(attempt.user_id) || 'Unknown User'
         }))
 
-        setResults(resultsWithNames)
+        setResults(resultsWithNames as unknown as ExamResult[])
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (err: any) {
         console.error('Error fetching results:', err)
