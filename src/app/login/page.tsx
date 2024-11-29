@@ -70,6 +70,7 @@ export default function LoginPage() {
           router.push('/user/dashboard')
         }
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -129,7 +130,7 @@ export default function LoginPage() {
               )}
             </Button>
             <p className="text-sm text-center">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/register" className="text-blue-600 hover:underline">
                 Register here
               </Link>

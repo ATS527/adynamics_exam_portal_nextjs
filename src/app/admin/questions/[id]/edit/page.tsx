@@ -15,8 +15,6 @@ interface QuestionBank {
   description: string | null
 }
 
-import QuestionBankEditClient from './question-bank-edit-client'
-
 export default function QuestionBankEditPage({ params }: { params: { id: string } }) {
   return <QuestionBankEditClient id={params.id} />
 }

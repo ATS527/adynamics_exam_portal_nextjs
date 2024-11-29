@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import StaticQuestionForm from "@/components/StaticQuestionForm";
 import DynamicQuestionForm from "@/components/DynamicQuestionForm";
 import { Question, StaticQuestion, DynamicQuestion } from "@/types/questions";
@@ -30,7 +29,6 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [isAddingStatic, setIsAddingStatic] = useState(false);
   const [isAddingDynamic, setIsAddingDynamic] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     async function fetchData() {
@@ -63,6 +61,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
         if (questionsError) throw questionsError;
 
         setQuestions(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           questionsData.map((q: any) => {
             if (q.question_type === "static") {
               return {
@@ -80,6 +79,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
             }
           })
         );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -106,6 +106,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
       if (error) throw error;
 
       alert("Question bank updated successfully");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error updating question bank:", error.message);
       alert("Failed to update question bank");
@@ -165,6 +166,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
         )
       );
       alert("Question updated successfully");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error updating question:", error.message);
     }
@@ -183,6 +185,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
       if (error) throw error;
 
       setQuestions(questions.filter((q) => q.id !== questionId));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error deleting question:", error.message);
     }
@@ -249,6 +252,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
       setIsAddingStatic(false);
       setIsAddingDynamic(false);
       alert("Question added successfully");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error adding question:", error.message);
       alert(`Failed to add question: ${error.message}`);

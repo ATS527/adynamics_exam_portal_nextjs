@@ -36,7 +36,6 @@ export function ExamListingClient() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [examToDelete, setExamToDelete] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -63,6 +62,7 @@ export function ExamListingClient() {
         }));
 
         setExams(examsWithQuestionCount);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -95,6 +95,7 @@ export function ExamListingClient() {
       
       // Refresh the router to ensure the UI is in sync
       router.refresh();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error deleting exam:", error);
       // Show the error in the UI instead of using alert
@@ -151,7 +152,7 @@ export function ExamListingClient() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete the exam "{exam.title}" and all associated data.
+                      This will permanently delete the exam &quot;{exam.title}&quot; and all associated data.
                       This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>

@@ -53,6 +53,7 @@ export default function QuestionBankSelector({
         if (examQuestionsError) throw examQuestionsError;
 
         setSelectedQuestions(examQuestions.map((eq) => eq.question_id));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -83,6 +84,7 @@ export default function QuestionBankSelector({
           selectedQuestions.filter((id) => id !== questionId)
         );
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error updating exam questions:", error.message);
     }
@@ -121,6 +123,7 @@ export default function QuestionBankSelector({
           )
         );
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error updating exam questions:", error.message);
     }

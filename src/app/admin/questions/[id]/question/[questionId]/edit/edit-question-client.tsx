@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +15,7 @@ interface Question {
   question_type: string
   template?: string
   variable_ranges?: Record<string, { min: number; max: number }>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   option_generation_rules?: Record<string, any>
   correct_answer_equation?: string
 }
@@ -78,6 +78,7 @@ export default function EditQuestionClient({
             if (questionData.variable_ranges) {
               try {
                 const vars: Variable[] = Object.entries(questionData.variable_ranges).map(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   ([name, range]: [string, any]) => ({
                     name,
                     min: parseFloat(range.min),
@@ -95,7 +96,7 @@ export default function EditQuestionClient({
             // Set option generation rules
             if (questionData.option_generation_rules) {
               try {
-                let rules = questionData.option_generation_rules
+                const rules = questionData.option_generation_rules
                 
                 // Convert the object format to array format
                 if (!Array.isArray(rules)) {
@@ -127,6 +128,7 @@ export default function EditQuestionClient({
                   console.log('Formatted rules:', formattedRules)
                   setOptionRules(formattedRules)
                 } else {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   setOptionRules(rules.map((rule: any) => ({
                     type: rule.type || 'incorrect',
                     equation: rule.equation || ''
@@ -230,6 +232,7 @@ export default function EditQuestionClient({
     try {
       setIsSaving(true)
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let updateData: any = {}
       if (question?.question_type === 'static') {
         updateData = { 
@@ -241,12 +244,13 @@ export default function EditQuestionClient({
         // Convert variables array to object format
         const variableRanges = variables.reduce((acc, { name, min, max }) => {
           if (name.trim()) {
-            acc[name.trim()] = { min: parseFloat(min), max: parseFloat(max) }
+            acc[name.trim()] = { min: parseFloat(min.toString()), max: parseFloat(max.toString()) }
           }
           return acc
         }, {} as Record<string, { min: number; max: number }>)
 
         // Convert option rules array to object format
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const validOptionRules = optionRules.reduce((acc: any, rule, index) => {
           if (rule.equation.trim()) {
             if (rule.type === 'correct') {

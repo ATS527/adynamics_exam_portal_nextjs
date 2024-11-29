@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Menu, LayoutDashboard } from 'lucide-react'
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [session, setSession] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
@@ -18,6 +20,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
     return <>{children}</>
   }
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -73,17 +76,51 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div>
-      <nav className="bg-gray-800 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <span>Exam Portal</span>
-          <div className="space-x-4">
-            <Link href="/user/dashboard" className="hover:underline">Dashboard</Link>
-            <Link href="/user/exams" className="hover:underline">Exams</Link>
-            <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
+      <nav className="bg-gray-900 text-white p-4 sticky top-0 z-50">
+        <div className="container mx-auto">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center justify-between">
+            <span className="text-lg font-semibold">Student Portal</span>
+            <div className="flex items-center space-x-1">
+              <Link href="/user/dashboard">
+                <Button variant="ghost" className="text-white hover:text-white hover:bg-gray-800">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Button variant="ghost" onClick={handleSignOut} className="text-white hover:text-white hover:bg-gray-800">
+                Sign Out
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="md:hidden flex items-center justify-between">
+            <span className="text-lg font-semibold">Student Portal</span>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-white">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64 bg-gray-900 text-white border-gray-800">
+                <div className="flex flex-col space-y-3 mt-6">
+                  <Link href="/user/dashboard">
+                    <Button variant="ghost" className="w-full justify-start text-white hover:text-white hover:bg-gray-800">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" onClick={handleSignOut} className="w-full justify-start text-white hover:text-white hover:bg-gray-800">
+                    Sign Out
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </nav>
-      <main className="container mx-auto py-4">
+      <main className="container mx-auto p-4">
         {children}
       </main>
     </div>

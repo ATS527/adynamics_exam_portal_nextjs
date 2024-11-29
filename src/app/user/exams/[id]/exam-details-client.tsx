@@ -55,6 +55,7 @@ export function ExamDetailsClient({ examId }: { examId: string }) {
           question_count: data.exam_questions[0].count,
           instructions: data.instructions || [],
         });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       } finally {

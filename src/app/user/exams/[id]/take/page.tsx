@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -70,31 +71,9 @@ const safeEvaluate = (expression: string, variables: Record<string, number>): nu
   }
 }
 
-const renderQuestionText = (text: string, variables: Record<string, number> | undefined) => {
-  if (!variables) return text
-
-  const operatorMap: Record<string, string> = {
-    '+': '&#43;',
-    '-': '&#8722;',
-    '*': '&#215;',
-    '/': '&#247;',
-    '=': '&#61;'
-  }
-
-  let processedText = text
-  Object.entries(operatorMap).forEach(([operator, entity]) => {
-    processedText = processedText.replace(new RegExp('\\' + operator, 'g'), entity)
-  })
-
-  return processedText.replace(/\{(\w+)\}/g, (match, variable) => {
-    const value = variables[variable]
-    return value !== undefined ? value.toString() : match
-  })
-}
-
-export default function ExamTakingPage() {
-  const params = use('params')
-  const { id } = params
+export default function ExamTakingPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params)
+  const { id } = resolvedParams
   const [exam, setExam] = useState<Exam | null>(null)
   const [staticOptions, setStaticOptions] = useState<Record<string, StaticOption[]>>({})
   const [dynamicQuestions, setDynamicQuestions] = useState<Record<string, DynamicQuestion>>({})
@@ -108,33 +87,43 @@ export default function ExamTakingPage() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [submissionSuccess, setSubmissionSuccess] = useState(false)
+  const [confirmedQuestions, setConfirmedQuestions] = useState<Set<string>>(new Set())
+  const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set())
+  const [isQuestionLocked, setIsQuestionLocked] = useState(false)
   const router = useRouter()
 
   const generateDynamicQuestion = useCallback((template: DynamicQuestionTemplate): DynamicQuestion => {
+    // Generate random variables based on ranges
     const variables: Record<string, number> = {}
     Object.entries(template.variable_ranges).forEach(([variable, range]) => {
       variables[variable] = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min
     })
 
+    // Generate the question text with the variables
     const questionText = template.template.replace(/\{(\w+)\}/g, (_, v) => variables[v]?.toString() || '')
 
+    // Generate options by evaluating each mathematical expression
     const options = Object.entries(template.option_generation_rules).map(([key, expression]) => {
-      const result = safeEvaluate(expression, variables)
+      // Replace variables in the expression with their values
+      const evaluatedExpression = expression.replace(/\{(\w+)\}/g, (_, v) => variables[v]?.toString() || '0')
+      
+      // Evaluate the expression
+      const result = safeEvaluate(evaluatedExpression, variables)
       
       return {
-        id: `option_${key}`,
+        id: key,
         option_text: Number.isInteger(result) ? result.toString() : result.toFixed(2),
         is_correct: key === 'correct'
       }
     })
 
+    // Ensure we have the correct answer option
     const correctAnswer = safeEvaluate(template.correct_answer_equation, variables)
     const correctOption = options.find(option => option.is_correct)
-    
-    // If there's no correct option or it doesn't match the correct answer, replace it
+
     if (!correctOption) {
       options.push({
-        id: `option_correct_${options.length}`,
+        id: 'correct',
         option_text: Number.isInteger(correctAnswer) ? correctAnswer.toString() : correctAnswer.toFixed(2),
         is_correct: true
       })
@@ -149,10 +138,14 @@ export default function ExamTakingPage() {
 
     // Generate additional options if needed to reach exactly 4 options
     while (uniqueOptions.length < 4) {
-      const newValue = correctAnswer + Math.floor(Math.random() * 10) - 5
+      // Generate wrong options by adding or subtracting a random value between 1 and 10 from the correct answer
+      const offset = Math.floor(Math.random() * 10) + 1
+      const sign = Math.random() < 0.5 ? 1 : -1
+      const newValue = correctAnswer + (offset * sign)
+      
       if (!uniqueOptions.some(o => parseFloat(o.option_text) === newValue)) {
         uniqueOptions.push({
-          id: `option_generated_${uniqueOptions.length}`,
+          id: `wrong_${uniqueOptions.length}`,
           option_text: Number.isInteger(newValue) ? newValue.toString() : newValue.toFixed(2),
           is_correct: false
         })
@@ -170,6 +163,7 @@ export default function ExamTakingPage() {
       uniqueOptions.splice(0, uniqueOptions.length, correctOption, ...selectedIncorrect)
     }
 
+    // Shuffle the options
     const shuffledOptions = [...uniqueOptions].sort(() => Math.random() - 0.5)
 
     return {
@@ -181,7 +175,8 @@ export default function ExamTakingPage() {
 
   const fetchExamDetails = useCallback(async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true)      
+      // First fetch exam with questions and their dynamic templates
       const { data: examData, error: examError } = await supabase
         .from('exams')
         .select(`
@@ -195,28 +190,48 @@ export default function ExamTakingPage() {
             question:questions (
               id,
               question_text,
-              question_type
+              question_type,
+              template,
+              variable_ranges,
+              option_generation_rules,
+              correct_answer_equation
             )
           )
         `)
         .eq('id', id)
         .single()
 
+        console.log('Fetched exam data:', examData);
+
       if (examError) throw examError
-
-      setExam(examData)
+      
+      // Transform exam_questions to have nested question data
+      const transformedExamData = {
+        ...examData,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        exam_questions: examData.exam_questions.map((eq: any) => ({
+          ...eq,
+          question: {
+            ...eq.question
+          }
+        }))
+      };
+      
+      setExam(transformedExamData)
       setTimeLeft(examData.duration_minutes * 60)
-      setForceTimeLeft(examData.force_time)
+      setForceTimeLeft(examData.force_time) // force_time is already in seconds
 
-      const staticQuestionIds = examData.exam_questions
+      // Fetch static options
+      const staticQuestionIds = transformedExamData.exam_questions
         .filter((eq: ExamQuestion) => eq.question.question_type === 'static')
-        .map((eq: ExamQuestion) => eq.question_id)
+        .map((eq: ExamQuestion) => eq.question.id)
 
       if (staticQuestionIds.length > 0) {
         const { data: staticOptionsData, error: staticOptionsError } = await supabase
-          .from('static_options')
+          .from('options')
           .select('*')
           .in('question_id', staticQuestionIds)
+          .order('id')
 
         if (staticOptionsError) throw staticOptionsError
 
@@ -231,26 +246,28 @@ export default function ExamTakingPage() {
         setStaticOptions(optionsByQuestionId)
       }
 
-      const dynamicQuestionIds = examData.exam_questions
+      // Generate dynamic questions
+      const dynamicQuestions: Record<string, DynamicQuestion> = {}
+      transformedExamData.exam_questions
         .filter((eq: ExamQuestion) => eq.question.question_type === 'dynamic')
-        .map((eq: ExamQuestion) => eq.question_id)
-
-      if (dynamicQuestionIds.length > 0) {
-        const { data: dynamicTemplatesData, error: dynamicTemplatesError } = await supabase
-          .from('dynamic_question_templates')
-          .select('*')
-          .in('question_id', dynamicQuestionIds)
-
-        if (dynamicTemplatesError) throw dynamicTemplatesError
-
-        const generatedDynamicQuestions: Record<string, DynamicQuestion> = {}
-        dynamicTemplatesData.forEach((template: DynamicQuestionTemplate) => {
-          generatedDynamicQuestions[template.question_id] = generateDynamicQuestion(template)
+        .forEach((eq: ExamQuestion) => {
+          if (eq.question.template && eq.question.variable_ranges && eq.question.option_generation_rules && eq.question.correct_answer_equation) {
+            dynamicQuestions[eq.question.id] = generateDynamicQuestion({
+              id: eq.question.id,
+              question_id: eq.question.id,
+              template: eq.question.template,
+              variable_ranges: eq.question.variable_ranges,
+              correct_answer_equation: eq.question.correct_answer_equation,
+              option_generation_rules: eq.question.option_generation_rules
+            })
+          }
         })
 
-        setDynamicQuestions(generatedDynamicQuestions)
-      }
+      setDynamicQuestions(dynamicQuestions)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      console.error("Error fetching exam details:", error);
       setError(error.message)
     } finally {
       setIsLoading(false)
@@ -276,15 +293,29 @@ export default function ExamTakingPage() {
     }, 1000)
 
     return () => clearInterval(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft])
 
   useEffect(() => {
-    if (forceTimeLeft === null) return
+    if (exam) {
+      const currentQuestionId = exam.exam_questions[currentQuestionIndex].question.id
+      if (!visitedQuestions.has(currentQuestionId)) {
+        setVisitedQuestions(prev => new Set([...prev, currentQuestionId]))
+        setForceTimeLeft(exam.force_time) // force_time is already in seconds
+        setIsQuestionLocked(true)
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestionIndex, exam])
+
+  useEffect(() => {
+    if (forceTimeLeft === null || forceTimeLeft === 0) return
 
     const timer = setInterval(() => {
       setForceTimeLeft((prevTime) => {
         if (prevTime === null || prevTime <= 0) {
           clearInterval(timer)
+          setIsQuestionLocked(false)
           return 0
         }
         return prevTime - 1
@@ -292,7 +323,7 @@ export default function ExamTakingPage() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [forceTimeLeft, currentQuestionIndex])
+  }, [forceTimeLeft])
 
   const handleAnswerChange = (questionId: string, answer: string) => {
     setAnswers((prevAnswers) => ({
@@ -301,17 +332,51 @@ export default function ExamTakingPage() {
     }))
   }
 
+  const handleConfirmQuestion = () => {
+    if (!exam) return
+    const currentQuestionId = exam.exam_questions[currentQuestionIndex].question.id
+    setConfirmedQuestions(prev => new Set([...prev, currentQuestionId]))
+    setIsQuestionLocked(false)
+    setForceTimeLeft(0)
+    if (currentQuestionIndex < exam.exam_questions.length - 1) {
+      handleNextQuestion()
+    }
+  }
+
+  const startForceTimerIfUnvisited = (questionId: string) => {
+    if (!visitedQuestions.has(questionId) && exam) {
+      setForceTimeLeft(exam.force_time) // force_time is already in seconds
+      setIsQuestionLocked(true)
+      setVisitedQuestions(prev => new Set([...prev, questionId]))
+    } else {
+      setForceTimeLeft(0)
+      setIsQuestionLocked(false)
+    }
+  }
+
   const handleNextQuestion = () => {
-    if (exam && currentQuestionIndex < exam.exam_questions.length - 1) {
-      setCurrentQuestionIndex((prevIndex) => prevIndex + 1)
-      setForceTimeLeft(exam.force_time)
+    if (!isQuestionLocked && exam && currentQuestionIndex < exam.exam_questions.length - 1) {
+      const nextIndex = currentQuestionIndex + 1
+      const nextQuestionId = exam.exam_questions[nextIndex].question.id
+      setCurrentQuestionIndex(nextIndex)
+      startForceTimerIfUnvisited(nextQuestionId)
     }
   }
 
   const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prevIndex) => prevIndex - 1)
-      setForceTimeLeft(exam.force_time)
+    if (!isQuestionLocked && currentQuestionIndex > 0) {
+      const prevIndex = currentQuestionIndex - 1
+      const prevQuestionId = exam.exam_questions[prevIndex].question.id
+      setCurrentQuestionIndex(prevIndex)
+      startForceTimerIfUnvisited(prevQuestionId)
+    }
+  }
+
+  const handleQuestionNavigation = (index: number) => {
+    if (!isQuestionLocked && exam) {
+      const targetQuestionId = exam.exam_questions[index].question.id
+      setCurrentQuestionIndex(index)
+      startForceTimerIfUnvisited(targetQuestionId)
     }
   }
 
@@ -346,23 +411,75 @@ export default function ExamTakingPage() {
         throw new Error('User not authenticated')
       }
 
-      const { data: attemptData, error: attemptError } = await supabase
+      // Calculate timestamps
+      const now = new Date()
+      const timeTakenSeconds = Math.floor(exam.duration_minutes * 60 - (timeLeft ?? 0))
+      
+      // Format dates in ISO format for Supabase timestamptz
+      const formatDate = (date: Date) => {
+        return date.toISOString()
+      }
+
+      // Calculate start time based on current time minus time taken
+      const startTime = new Date(now.getTime() - (timeTakenSeconds * 1000))
+
+      // Calculate exam statistics
+      let correctAnswers = 0
+      let wrongAnswers = 0
+      let skippedQuestions = 0
+
+      exam.exam_questions.forEach((eq) => {
+        const questionId = eq.question.id
+        const userAnswer = answers[questionId]
+        
+        if (!userAnswer) {
+          skippedQuestions++
+          return
+        }
+
+        const options = eq.question.question_type === 'static' 
+          ? staticOptions[questionId] || []
+          : dynamicQuestions[questionId]?.options || []
+        
+        const selectedOption = options.find(opt => opt.id === userAnswer)
+        if (selectedOption?.is_correct) {
+          correctAnswers++
+        } else {
+          wrongAnswers++
+        }
+      })
+
+      // Calculate score as percentage
+      const totalQuestions = exam.exam_questions.length
+      const score = (correctAnswers / totalQuestions) * 100
+
+      const attemptData = {
+        exam_id: exam.id,
+        user_id: session.session.user.id,
+        start_time: formatDate(startTime),
+        end_time: formatDate(now),
+        total_questions: totalQuestions,
+        time_taken: timeTakenSeconds,
+        score: score,
+        correct_answers: correctAnswers,
+        wrong_answers: wrongAnswers,
+        skipped_questions: skippedQuestions
+      }
+
+      console.log('Submitting attempt data:', attemptData)
+
+      const { data: savedAttempt, error: attemptError } = await supabase
         .from('user_exam_attempts')
-        .insert({
-          exam_id: exam.id,
-          user_id: session.session.user.id,
-          start_time: new Date(Date.now() - (timeLeft ?? 0) * 1000).toISOString(),
-          end_time: new Date().toISOString(),
-          total_questions: exam.exam_questions.length,
-          time_taken: exam.duration_minutes * 60 - (timeLeft ?? 0),
-        })
+        .insert(attemptData)
         .select()
         .single()
 
-      if (attemptError) throw attemptError
+      if (attemptError) {
+        console.error('Attempt Error:', attemptError, 'Attempt Data:', attemptData)
+        throw new Error('Failed to save exam attempt')
+      }
 
       const questionResponses = Object.entries(answers).map(([questionId, userResponse]) => {
-        // Find the selected option text and correct answer
         const question = exam.exam_questions.find(q => q.question_id === questionId)?.question
         const options = question?.question_type === 'static' 
           ? staticOptions[question.id] || []
@@ -371,11 +488,11 @@ export default function ExamTakingPage() {
         const correctOption = options.find(opt => opt.is_correct)
         
         return {
-          user_exam_attempt_id: attemptData.id,
+          user_exam_attempt_id: savedAttempt.id,
           question_id: questionId,
           user_response: selectedOption?.option_text || null,
           correct_answer: correctOption?.option_text || null,
-          is_correct: selectedOption?.is_correct || null
+          is_correct: selectedOption?.is_correct || false
         }
       })
 
@@ -383,15 +500,19 @@ export default function ExamTakingPage() {
         .from('user_question_responses')
         .insert(questionResponses)
 
-      if (responsesError) throw responsesError
+      if (responsesError) {
+        console.error('Responses Error:', responsesError)
+        throw new Error('Failed to save question responses')
+      }
 
       setSubmissionSuccess(true)
       setTimeout(() => {
         router.push('/user/dashboard')
       }, 3000)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      console.error('Error submitting exam:', error.message)
-      setSubmissionError(error.message)
+      console.error('Error submitting exam:', error)
+      setSubmissionError(error.message || 'Failed to submit exam')
     } finally {
       setIsSubmitting(false)
     }
@@ -421,6 +542,7 @@ export default function ExamTakingPage() {
 
   const currentExamQuestion = exam.exam_questions[currentQuestionIndex]
   const currentQuestion = currentExamQuestion.question
+  
   const currentOptions = currentQuestion.question_type === 'static' 
     ? staticOptions[currentQuestion.id] || []
     : dynamicQuestions[currentQuestion.id]?.options || []
@@ -437,59 +559,80 @@ export default function ExamTakingPage() {
         <CardContent className="space-y-6">
           <div className="flex justify-between items-center">
             <div>Question {currentQuestionIndex + 1} of {exam.exam_questions.length}</div>
-            <div>Force Time: {forceTimeLeft}s</div>
+            {forceTimeLeft !== null && (
+              forceTimeLeft > 0 && (
+                <div>Force Time: {Math.floor((forceTimeLeft) / 60)}:{(forceTimeLeft % 60).toString().padStart(2, '0')}</div>
+              )
+            )}
           </div>
-          <ScrollArea className="h-60 rounded-md border p-4">
-            <h3 
-              className="text-lg font-semibold mb-4"
-              dangerouslySetInnerHTML={{
-                __html: currentQuestion.question_type === 'static' 
+          <ScrollArea className="h-[calc(100vh-400px)] rounded-md border p-4">
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                {currentQuestion.question_type === 'static' 
                   ? currentQuestion.question_text 
-                  : renderQuestionText(
-                      dynamicQuestions[currentQuestion.id]?.question_text || '',
-                      dynamicQuestions[currentQuestion.id]?.variables
-                    )
-              }}
-            />
-            <RadioGroup
-              value={answers[currentQuestion.id] || ''}
-              onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-            >
-              {currentOptions.map((option, index) => (
-                <div key={option.id} className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value={option.id} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`}>
-                    {String.fromCharCode(65 + index)}. {' '}
-                    <span dangerouslySetInnerHTML={{
-                      __html: renderQuestionText(option.option_text, dynamicQuestions[currentQuestion.id]?.variables)
-                    }} />
-                  </Label>
+                  : (dynamicQuestions[currentQuestion.id]?.question_text || 'Loading dynamic question...')}
+              </h3>
+              {currentOptions.length > 0 ? (
+                <RadioGroup
+                  value={answers[currentQuestion.id] || ''}
+                  onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                  className="space-y-2"
+                >
+                  {currentOptions.map((option, index) => (
+                    <div key={option.id} className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
+                      <RadioGroupItem value={option.id} id={`option-${index}`} />
+                      <Label className="cursor-pointer flex-grow" htmlFor={`option-${index}`}>
+                        {String.fromCharCode(65 + index)}. {option.option_text}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              ) : (
+                <div className="text-center text-gray-500">
+                  No options available for this question
                 </div>
-              ))}
-            </RadioGroup>
+              )}
+            </div>
           </ScrollArea>
           <div className="flex flex-wrap gap-2">
-            {exam.exam_questions.map((_, index) => (
-              <Button
-                key={index}
-                variant={index === currentQuestionIndex ? "default" : "outline"}
-                onClick={() => {
-                  setCurrentQuestionIndex(index)
-                  setForceTimeLeft(exam.force_time)
-                }}
-              >
-                {index + 1}
-              </Button>
-            ))}
+            {exam.exam_questions.map((eq, index) => {
+              const questionId = eq.question.id;
+              const isConfirmed = confirmedQuestions.has(questionId);
+              const isAnswered = !!answers[questionId];
+              
+              let variant: "default" | "outline" | "secondary" | "success" = "outline";
+              if (index === currentQuestionIndex) variant = "default";
+              else if (isConfirmed) variant = "success";
+              else if (isAnswered) variant = "secondary";
+
+              return (
+                <Button
+                  key={index}
+                  variant={variant}
+                  onClick={() => handleQuestionNavigation(index)}
+                  disabled={isQuestionLocked}
+                  className="w-10 h-10"
+                >
+                  {index + 1}
+                </Button>
+              );
+            })}
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
           <div>
-            <Button onClick={handlePreviousQuestion} disabled={currentQuestionIndex === 0}>Previous</Button>
+            <Button onClick={handlePreviousQuestion} disabled={currentQuestionIndex === 0 || isQuestionLocked}>Previous</Button>
           </div>
           <div className="space-x-2">
-            <Button onClick={handleResetQuestion} variant="outline">Reset</Button>
-            <Button onClick={handleNextQuestion} disabled={currentQuestionIndex === exam.exam_questions.length - 1}>Next</Button>
+            <Button onClick={handleResetQuestion} variant="outline" disabled={isQuestionLocked}>Reset</Button>
+            <Button 
+              onClick={handleConfirmQuestion}
+              variant="success"
+              disabled={!answers[currentQuestion.id] || confirmedQuestions.has(currentQuestion.id)}
+            >
+              Confirm Answer
+            </Button>
+            <Button onClick={handleNextQuestion} disabled={currentQuestionIndex === exam.exam_questions.length - 1 || isQuestionLocked}>Next</Button>
             <Button onClick={() => setShowConfirmDialog(true)} disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Submit Exam

@@ -34,41 +34,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      dynamic_question_templates: {
-        Row: {
-          correct_answer_equation: string
-          id: string
-          option_generation_rules: Json
-          question_id: string | null
-          template: string
-          variable_ranges: Json
-        }
-        Insert: {
-          correct_answer_equation: string
-          id?: string
-          option_generation_rules: Json
-          question_id?: string | null
-          template: string
-          variable_ranges: Json
-        }
-        Update: {
-          correct_answer_equation?: string
-          id?: string
-          option_generation_rules?: Json
-          question_id?: string | null
-          template?: string
-          variable_ranges?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dynamic_question_templates_question_id_fkey"
-            columns: ["question_id"]
-            isOneToOne: false
-            referencedRelation: "questions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       exam_questions: {
         Row: {
           exam_id: string | null
@@ -152,27 +117,27 @@ export type Database = {
       }
       options: {
         Row: {
-          id: string
-          question_id: string
-          option_text: string
-          is_correct: boolean
           created_at: string | null
+          id: string
+          is_correct: boolean
+          option_text: string
+          question_id: string
           updated_at: string | null
         }
         Insert: {
-          id?: string
-          question_id: string
-          option_text: string
-          is_correct?: boolean
           created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          option_text: string
+          question_id: string
           updated_at?: string | null
         }
         Update: {
-          id?: string
-          question_id?: string
-          option_text?: string
-          is_correct?: boolean
           created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          option_text?: string
+          question_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -182,7 +147,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "questions"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       question_banks: {
@@ -211,28 +176,40 @@ export type Database = {
       }
       questions: {
         Row: {
+          correct_answer_equation: string | null
           created_at: string | null
           id: string
+          option_generation_rules: Json | null
           question_bank_id: string | null
           question_text: string
           question_type: string
+          template: string | null
           updated_at: string | null
+          variable_ranges: Json | null
         }
         Insert: {
+          correct_answer_equation?: string | null
           created_at?: string | null
           id?: string
+          option_generation_rules?: Json | null
           question_bank_id?: string | null
           question_text: string
           question_type: string
+          template?: string | null
           updated_at?: string | null
+          variable_ranges?: Json | null
         }
         Update: {
+          correct_answer_equation?: string | null
           created_at?: string | null
           id?: string
+          option_generation_rules?: Json | null
           question_bank_id?: string | null
           question_text?: string
           question_type?: string
+          template?: string | null
           updated_at?: string | null
+          variable_ranges?: Json | null
         }
         Relationships: [
           {
@@ -244,31 +221,41 @@ export type Database = {
           },
         ]
       }
-      static_options: {
+      user_answers: {
         Row: {
+          attempt_id: string | null
+          created_at: string
           id: string
-          is_correct: boolean
-          option_text: string
           question_id: string | null
+          selected_option: string | null
         }
         Insert: {
+          attempt_id?: string | null
+          created_at?: string
           id?: string
-          is_correct?: boolean
-          option_text: string
           question_id?: string | null
+          selected_option?: string | null
         }
         Update: {
+          attempt_id?: string | null
+          created_at?: string
           id?: string
-          is_correct?: boolean
-          option_text?: string
           question_id?: string | null
+          selected_option?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "static_options_question_id_fkey"
+            foreignKeyName: "user_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "user_exam_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_answers_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
-            referencedRelation: "questions"
+            referencedRelation: "exam_questions"
             referencedColumns: ["id"]
           },
         ]
@@ -282,7 +269,7 @@ export type Database = {
           score: number | null
           skipped_questions: number | null
           start_time: string | null
-          time_taken: string | null
+          time_taken: number | null
           total_questions: number | null
           user_id: string | null
           wrong_answers: number | null
@@ -295,7 +282,7 @@ export type Database = {
           score?: number | null
           skipped_questions?: number | null
           start_time?: string | null
-          time_taken?: string | null
+          time_taken?: number | null
           total_questions?: number | null
           user_id?: string | null
           wrong_answers?: number | null
@@ -308,7 +295,7 @@ export type Database = {
           score?: number | null
           skipped_questions?: number | null
           start_time?: string | null
-          time_taken?: string | null
+          time_taken?: number | null
           total_questions?: number | null
           user_id?: string | null
           wrong_answers?: number | null

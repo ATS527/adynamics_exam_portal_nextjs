@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Loader2, Plus, Upload, Download } from 'lucide-react'
+import { Loader2, Plus, Download } from 'lucide-react'
 import { parseQuestionXLSX } from '@/lib/xlsx-parser'
 import {
   Dialog,
@@ -115,6 +115,7 @@ export default function QuestionBankPage() {
               }
             }
           }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           console.error('Error processing XLSX:', error);
           throw new Error('Failed to process question file: ' + error.message);
@@ -126,6 +127,7 @@ export default function QuestionBankPage() {
       setNewBankDescription('')
       setSelectedFile(null)
       setIsCreateDialogOpen(false)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error creating question bank:', error)
       setError(error.message)

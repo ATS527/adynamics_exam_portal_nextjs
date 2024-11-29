@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Layout from "@/components/Layout";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import CreateQuestionBankDialog from "@/components/CreateQuestionBankDialog";
 import Link from "next/link";
 
@@ -74,10 +74,6 @@ export default function QuestionBanks() {
 
   const handleCreateQuestionBank = () => {
     setIsDialogOpen(true);
-  };
-
-  const handleEditQuestionBank = (id: string) => {
-    router.push(`/admin/question-banks/${id}/edit`);
   };
 
   const handleDeleteQuestionBank = async (id: string) => {
