@@ -61,8 +61,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
         if (questionsError) throw questionsError;
 
         setQuestions(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          questionsData.map((q: any) => {
+            questionsData.map((q: any) => {
             if (q.question_type === "static") {
               return {
                 id: q.id,
@@ -214,8 +213,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
         const { data: insertedOptions, error: optionsError } = await supabase
           .from("static_options")
           .insert(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            staticQuestion.static_options.map((option: { option_text: any; is_correct: any; }) => ({
+                staticQuestion.static_options.map((option: { option_text: any; is_correct: any; }) => ({
               option_text: option.option_text,
               is_correct: option.is_correct,
               question_id: insertedQuestion.id,

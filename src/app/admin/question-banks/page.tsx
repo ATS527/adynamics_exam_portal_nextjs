@@ -87,7 +87,6 @@ export default function QuestionBanks() {
         if (error) throw error;
 
         fetchQuestionBanks();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       }

@@ -57,9 +57,7 @@ export async function PUT(
       
       // Delete removed options
       const existingOptionIds = options
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((opt: any) => !opt.id.startsWith('new-'))
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .map((opt: any) => opt.id)
 
       if (existingOptionIds.length > 0) {

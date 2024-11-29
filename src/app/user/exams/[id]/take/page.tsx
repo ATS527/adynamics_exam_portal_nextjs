@@ -208,7 +208,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       // Transform exam_questions to have nested question data
       const transformedExamData = {
         ...examData,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         exam_questions: examData.exam_questions.map((eq: any) => ({
           ...eq,
           question: {
@@ -249,9 +248,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       // Generate dynamic questions
       const dynamicQuestions: Record<string, DynamicQuestion> = {}
       transformedExamData.exam_questions
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .filter((eq: any) => eq.question.question_type === 'dynamic')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .forEach((eq: any) => {
           if (eq.question.template && eq.question.variable_ranges && eq.question.option_generation_rules && eq.question.correct_answer_equation) {
             dynamicQuestions[eq.question.id] = generateDynamicQuestion({
@@ -267,7 +264,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
 
       setDynamicQuestions(dynamicQuestions)
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error fetching exam details:", error);
       setError(error.message)
@@ -511,7 +507,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       setTimeout(() => {
         router.push('/user/dashboard')
       }, 3000)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error submitting exam:', error)
       setSubmissionError(error.message || 'Failed to submit exam')

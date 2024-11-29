@@ -50,8 +50,7 @@ export default function CreateQuestionBankDialog({
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         const parsedQuestions = jsonData
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((row: any) => {
+            .map((row: any) => {
             const baseQuestion = {
               question_text:
                 row.question_text ||
@@ -146,8 +145,7 @@ export default function CreateQuestionBankDialog({
             const { error: optionsError } = await supabase
               .from("static_options")
               .insert(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                question.static_options.map((option: any) => ({
+                        question.static_options.map((option: any) => ({
                   ...option,
                   question_id: insertedQuestion.id,
                 }))

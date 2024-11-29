@@ -141,7 +141,6 @@ export default function ResultsPage() {
         if (usersError) throw usersError
 
         // Map users to attempts
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const userMap = new Map(users.map((user: any) => [user.id, user.name]))
         
         const resultsWithNames = examAttempts.map(attempt => ({
@@ -206,8 +205,7 @@ export default function ResultsPage() {
         if (question.question_type === 'dynamic' && question.template) {
           const variableRanges = question.variable_ranges || {}
           const variableValues = Object.entries(variableRanges)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .map(([name, range]: [string, any]) => (
+                .map(([name, range]: [string, any]) => (
               `${name}: ${range.min}-${range.max}`
             ))
             .join(', ')

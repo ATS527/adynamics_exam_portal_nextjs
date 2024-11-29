@@ -78,8 +78,7 @@ export default function EditQuestionClient({
             if (questionData.variable_ranges) {
               try {
                 const vars: Variable[] = Object.entries(questionData.variable_ranges).map(
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ([name, range]: [string, any]) => ({
+                            ([name, range]: [string, any]) => ({
                     name,
                     min: parseFloat(range.min),
                     max: parseFloat(range.max),
@@ -128,8 +127,7 @@ export default function EditQuestionClient({
                   console.log('Formatted rules:', formattedRules)
                   setOptionRules(formattedRules as OptionRule[])
                 } else {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  setOptionRules(rules.map((rule: any) => ({
+                            setOptionRules(rules.map((rule: any) => ({
                     type: rule.type || 'incorrect',
                     equation: rule.equation || ''
                   })))
@@ -250,7 +248,6 @@ export default function EditQuestionClient({
         }, {} as Record<string, { min: number; max: number }>)
 
         // Convert option rules array to object format
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const validOptionRules = optionRules.reduce((acc: any, rule, index) => {
           if (rule.equation.trim()) {
             if (rule.type === 'correct') {

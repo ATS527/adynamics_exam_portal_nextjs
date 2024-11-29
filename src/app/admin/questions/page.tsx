@@ -115,7 +115,6 @@ export default function QuestionBankPage() {
               }
             }
           }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           console.error('Error processing XLSX:', error);
           throw new Error('Failed to process question file: ' + error.message);
