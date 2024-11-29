@@ -12,10 +12,16 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   const [session, setSession] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
-  const pathname = window.location.pathname
+  const [shouldRenderLayout, setShouldRenderLayout] = useState(true)
 
-  // Don't render user layout for admin routes
-  if (pathname.startsWith('/admin')) {
+  useEffect(() => {
+    // Check if we're on an admin route
+    if (router.pathname?.startsWith('/admin')) {
+      setShouldRenderLayout(false)
+    }
+  }, [router.pathname])
+
+  if (!shouldRenderLayout) {
     return <>{children}</>
   }
 
