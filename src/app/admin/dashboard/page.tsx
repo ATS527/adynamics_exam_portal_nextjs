@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 
 export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 

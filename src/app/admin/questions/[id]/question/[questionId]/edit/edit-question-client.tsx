@@ -15,7 +15,6 @@ interface Question {
   question_type: string
   template?: string
   variable_ranges?: Record<string, { min: number; max: number }>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   option_generation_rules?: Record<string, any>
   correct_answer_equation?: string
 }
@@ -230,8 +229,7 @@ export default function EditQuestionClient({
     try {
       setIsSaving(true)
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let updateData: any = {}
+        let updateData: any = {}
       if (question?.question_type === 'static') {
         updateData = { 
           question_type: 'static',

@@ -100,7 +100,6 @@ export function EditExamClient({ id }: EditExamClientProps) {
         setExam(formattedExamData);
         setSelectedQuestions(examQuestions.map((eq) => eq.question_id));
         setQuestionBanks(questionBanksData);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       } finally {
@@ -166,7 +165,6 @@ export function EditExamClient({ id }: EditExamClientProps) {
 
       router.push("/admin/exams");
       router.refresh();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setError(error.message);
     }

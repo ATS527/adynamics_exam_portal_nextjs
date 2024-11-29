@@ -83,7 +83,6 @@ export default function ResultsPage() {
   const [results, setResults] = useState<ExamResult[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [session, setSession] = useState<any>(null)
   const [selectedAttempt, setSelectedAttempt] = useState<ExamResult | null>(null)
   const [attemptDetails, setAttemptDetails] = useState<AttemptDetail[]>([])
@@ -149,8 +148,7 @@ export default function ResultsPage() {
         }))
 
         setResults(resultsWithNames as unknown as ExamResult[])
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
+        } catch (err: any) {
         console.error('Error fetching results:', err)
         setError(err.message)
       } finally {
@@ -195,8 +193,7 @@ export default function ResultsPage() {
       }
 
       // Transform the data into attempt details
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const details: AttemptDetail[] = responses?.map((response: any) => {
+        const details: AttemptDetail[] = responses?.map((response: any) => {
         const question = response.questions
         const questionText = question.question_text
         let dynamicInfo = null
@@ -228,7 +225,6 @@ export default function ResultsPage() {
       }) || []
       
       setAttemptDetails(details)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('Error fetching attempt details:', err)
     } finally {

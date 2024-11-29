@@ -9,7 +9,6 @@ import { Loader2, Menu, LayoutDashboard } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [session, setSession] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()

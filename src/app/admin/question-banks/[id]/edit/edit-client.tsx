@@ -23,7 +23,6 @@ interface EditQuestionBankClientProps {
 
 export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
   const [questionBank, setQuestionBank] = useState<QuestionBank | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [questions, setQuestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,8 +77,7 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
             }
           })
         );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+        } catch (error: any) {
         setError(error.message);
       } finally {
         setIsLoading(false);
@@ -105,14 +103,12 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
       if (error) throw error;
 
       alert("Question bank updated successfully");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error updating question bank:", error.message);
       alert("Failed to update question bank");
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleQuestionUpdate = async (updatedQuestion: any) => {
     try {
       if (updatedQuestion.question_type === "static") {
@@ -166,7 +162,6 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
         )
       );
       alert("Question updated successfully");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error updating question:", error.message);
     }
@@ -185,13 +180,11 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
       if (error) throw error;
 
       setQuestions(questions.filter((q) => q.id !== questionId));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error deleting question:", error.message);
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddQuestion = async (newQuestion: Omit<any, "id">) => {
     try {
       const { data: insertedQuestion, error: questionError } = await supabase
@@ -253,7 +246,6 @@ export function EditQuestionBankClient({ id }: EditQuestionBankClientProps) {
       setIsAddingStatic(false);
       setIsAddingDynamic(false);
       alert("Question added successfully");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error adding question:", error.message);
       alert(`Failed to add question: ${error.message}`);

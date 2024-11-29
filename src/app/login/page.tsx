@@ -70,7 +70,6 @@ export default function LoginPage() {
           router.push('/user/dashboard')
         }
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setError(error.message)
     } finally {

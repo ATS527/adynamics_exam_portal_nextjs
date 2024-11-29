@@ -17,7 +17,6 @@ export async function getUserEmails(userIds: string[]) {
     }
 
     // Create a map of user IDs to emails
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const emailMap = users.reduce((acc: Record<string, string>, user: any) => {
       if (userIds.includes(user.id)) {
         acc[user.id] = user.email

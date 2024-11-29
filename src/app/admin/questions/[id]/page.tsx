@@ -40,7 +40,6 @@ interface Question {
   created_at: string | null
   template?: string
   variable_ranges?: Record<string, { min: number; max: number }>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   option_generation_rules?: Record<string, any>
   correct_answer_equation?: string
   options?: Option[]
@@ -112,7 +111,6 @@ export function QuestionBankViewClient({ id }: { id: string }) {
       if (newQuestionType === 'dynamic') {
         try {
           variableRangesObj = JSON.parse(variableRanges)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (e) {
           alert('Invalid variable ranges format. Please use valid JSON.')
           return
@@ -166,7 +164,6 @@ export function QuestionBankViewClient({ id }: { id: string }) {
 
       router.push('/admin/questions');
       router.refresh();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Error deleting question bank:', error);
       setError(`Failed to delete question bank: ${error.message}`);

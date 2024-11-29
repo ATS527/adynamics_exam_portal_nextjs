@@ -16,8 +16,7 @@ export default function ForgotPassword() {
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       if (error) throw error;
       setMessage("Password reset link sent to your email.");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+      } catch (error: any) {
       setError(error.message);
     }
   };

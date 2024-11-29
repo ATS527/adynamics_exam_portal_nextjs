@@ -62,8 +62,7 @@ export function ExamListingClient() {
         }));
 
         setExams(examsWithQuestionCount);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+        } catch (error: any) {
         setError(error.message);
       } finally {
         setIsLoading(false);
@@ -95,7 +94,6 @@ export function ExamListingClient() {
       
       // Refresh the router to ensure the UI is in sync
       router.refresh();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error deleting exam:", error);
       // Show the error in the UI instead of using alert

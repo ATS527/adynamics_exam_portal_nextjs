@@ -75,8 +75,7 @@ export function CreateExamClient() {
         if (error) throw error;
 
         setQuestionBanks(data);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
+        } catch (error: any) {
         setError(error.message);
       } finally {
         setIsLoading(false);
@@ -185,7 +184,6 @@ export function CreateExamClient() {
 
       alert("Exam created successfully!");
       router.push("/admin/exams");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error creating exam:", error.message);
       alert(`Failed to create exam: ${error.message}`);

@@ -38,7 +38,6 @@ export default function CreateQuestionBankDialog({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const parseXLSX = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -166,8 +165,7 @@ export default function CreateQuestionBankDialog({
       }
 
       onCreateSuccess();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+      } catch (error: any) {
       setError(error.message);
     } finally {
       setIsLoading(false);

@@ -60,7 +60,6 @@ export function UserDashboardClient() {
         setPremiumExams(
           examsWithQuestionCount.filter((exam) => exam.is_premium)
         );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setError(error.message);
       } finally {

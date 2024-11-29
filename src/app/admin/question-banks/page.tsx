@@ -57,15 +57,13 @@ export default function QuestionBanks() {
 
       if (error) throw error;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const formattedData = data.map((bank: any) => ({
+        const formattedData = data.map((bank: any) => ({
         ...bank,
         question_count: bank.questions[0].count,
       }));
 
       setQuestionBanks(formattedData);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+      } catch (error: any) {
       setError(error.message);
     } finally {
       setIsLoading(false);
