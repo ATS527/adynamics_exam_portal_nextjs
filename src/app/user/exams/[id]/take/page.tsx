@@ -249,8 +249,10 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       // Generate dynamic questions
       const dynamicQuestions: Record<string, DynamicQuestion> = {}
       transformedExamData.exam_questions
-        .filter((eq: ExamQuestion) => eq.question.question_type === 'dynamic')
-        .forEach((eq: ExamQuestion) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((eq: any) => eq.question.question_type === 'dynamic')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .forEach((eq: any) => {
           if (eq.question.template && eq.question.variable_ranges && eq.question.option_generation_rules && eq.question.correct_answer_equation) {
             dynamicQuestions[eq.question.id] = generateDynamicQuestion({
               id: eq.question.id,
