@@ -44,19 +44,22 @@ export default function RegisterPage() {
       if (error) throw error
 
       if (data.user) {
-        // Insert the user data into the users table
-        const { error: insertError } = await supabase
+        // Upsert the user data into the users table
+        const { error: upsertError } = await supabase
           .from('users')
-          .insert([
+          .upsert([
             {
               id: data.user.id,
-              email: email,
               name: name,
               role: 'user'
             }
-          ])
+          ], 
+          { 
+            onConflict: 'id',
+            ignoreDuplicates: false
+          })
         
-        if (insertError) throw insertError
+        if (upsertError) throw upsertError
 
         router.push('/login?message=Registration successful. Please log in.')
       }
