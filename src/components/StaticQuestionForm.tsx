@@ -1,18 +1,13 @@
-"use client";
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { StaticQuestion } from "@/types/questions";
-import { Plus, Trash } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { StaticQuestion, QuestionFormProps } from "@/types/questions";
 
-interface StaticQuestionFormProps {
+interface StaticQuestionFormProps extends QuestionFormProps {
   question: StaticQuestion;
-  onUpdate: (question: StaticQuestion) => void;
-  onDelete?: () => void;
-  onCancel?: () => void;
 }
 
 export default function StaticQuestionForm({
@@ -21,111 +16,138 @@ export default function StaticQuestionForm({
   onDelete,
   onCancel,
 }: StaticQuestionFormProps) {
-  const [editedQuestion, setEditedQuestion] =
-    useState<StaticQuestion>(question);
+  const [editedQuestion, setEditedQuestion] = useState<StaticQuestion>(question);
 
-  const handleOptionChange = (
-    index: number,
-    field: "option_text" | "is_correct",
-    value: string | boolean
-  ) => {
-    const newOptions = [...editedQuestion.static_options];
-    newOptions[index] = { ...newOptions[index], [field]: value };
-    setEditedQuestion({ ...editedQuestion, static_options: newOptions });
-  };
-
-  const handleAddOption = () => {
+  const handleOptionChange = (index: number, field: 'option_text' | 'is_correct', value: any) => {
+    const newOptions = [...editedQuestion.options];
+    newOptions[index] = {
+      ...newOptions[index],
+      [field]: value
+    };
     setEditedQuestion({
       ...editedQuestion,
-      static_options: [
-        ...editedQuestion.static_options,
-        { id: "", option_text: "", is_correct: false },
-      ],
+      options: newOptions
     });
   };
 
-  const handleRemoveOption = (index: number) => {
-    const newOptions = [...editedQuestion.static_options];
-    newOptions.splice(index, 1);
-    setEditedQuestion({ ...editedQuestion, static_options: newOptions });
+  const addOption = () => {
+    if (editedQuestion.options.length < 4) {
+      setEditedQuestion({
+        ...editedQuestion,
+        options: [
+          ...editedQuestion.options,
+          {
+            option_number: editedQuestion.options.length + 1,
+            option_text: '',
+            is_correct: false
+          }
+        ]
+      });
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUpdate(editedQuestion);
+  const removeOption = (index: number) => {
+    const newOptions = editedQuestion.options
+      .filter((_, i) => i !== index)
+      .map((opt, i) => ({
+        ...opt,
+        option_number: i + 1
+      }));
+    
+    setEditedQuestion({
+      ...editedQuestion,
+      options: newOptions
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-4">
-        <Label htmlFor="question_text">Question Text</Label>
-        <Input
-          id="question_text"
+    <div className="space-y-4">
+      <div>
+        <Label>Question Text</Label>
+        <Textarea
           value={editedQuestion.question_text}
-          onChange={(e) =>
-            setEditedQuestion({
-              ...editedQuestion,
-              question_text: e.target.value,
-            })
-          }
-          required
+          onChange={(e) => setEditedQuestion({
+            ...editedQuestion,
+            question_text: e.target.value
+          })}
+          placeholder="Enter your question"
         />
       </div>
-      {editedQuestion.static_options.map((option, index) => (
-        <div
-          key={option.id || index}
-          className="mb-4 flex items-center space-x-2"
-        >
-          <Input
-            value={option.option_text}
-            onChange={(e) =>
-              handleOptionChange(index, "option_text", e.target.value)
-            }
-            placeholder={`Option ${index + 1}`}
-            required
-          />
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id={`correct-${index}`}
-              checked={option.is_correct}
-              onCheckedChange={(checked) =>
-                handleOptionChange(index, "is_correct", checked as boolean)
-              }
+
+      <div>
+        <Label>Options</Label>
+        {editedQuestion.options.map((option, index) => (
+          <div key={index} className="flex items-center space-x-2 mt-2">
+            <Input
+              value={option.option_text}
+              onChange={(e) => handleOptionChange(index, 'option_text', e.target.value)}
+              placeholder={`Option ${option.option_number}`}
             />
-            <Label htmlFor={`correct-${index}`}>Correct</Label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="correct_option"
+                checked={option.is_correct}
+                onChange={(e) => {
+                  const newOptions = editedQuestion.options.map((opt, i) => ({
+                    ...opt,
+                    is_correct: i === index
+                  }));
+                  setEditedQuestion({
+                    ...editedQuestion,
+                    options: newOptions
+                  });
+                }}
+              />
+              <Label>Correct</Label>
+            </div>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => removeOption(index)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
+        ))}
+        {editedQuestion.options.length < 4 && (
           <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => handleRemoveOption(index)}
+            variant="outline"
+            size="sm"
+            onClick={addOption}
+            className="mt-2"
           >
-            <Trash className="h-4 w-4" />
-          </Button>
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleAddOption}
-        className="mb-4"
-      >
-        <Plus className="h-4 w-4 mr-2" /> Add Option
-      </Button>
-      <div className="flex justify-between mt-4">
-        <Button type="submit">Save Question</Button>
-        {onDelete && (
-          <Button type="button" variant="destructive" onClick={onDelete}>
-            Delete Question
+            <Plus className="h-4 w-4 mr-2" /> Add Option
           </Button>
         )}
+      </div>
+
+      <div>
+        <Label>Number of Times to Generate</Label>
+        <Input
+          type="number"
+          value={editedQuestion.no_of_times}
+          onChange={(e) => setEditedQuestion({
+            ...editedQuestion,
+            no_of_times: parseInt(e.target.value)
+          })}
+          min={1}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
         )}
+        {onDelete && (
+          <Button variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+        )}
+        <Button onClick={() => onUpdate(editedQuestion)}>Save</Button>
       </div>
-    </form>
+    </div>
   );
 }

@@ -75,20 +75,26 @@ export default function QuestionBankPage() {
           
           // Insert questions
           for (const question of questions) {
+            const questionData = {
+              question_bank_id: bankData.id,
+              question_text: question.question_text,
+              question_type: question.question_type,
+              no_of_times: question.no_of_times
+            };
+
+            // Add dynamic fields only if not static
+            if (question.question_type !== 'static') {
+              Object.assign(questionData, {
+                template: question.template || '',
+                variable_ranges: question.variable_ranges || {},
+                option_generation_rules: question.option_generation_rules || {}
+              });
+            }
+
             // Insert the question
-            const { data: questionData, error: questionError } = await supabase
+            const { data: insertedQuestion, error: questionError } = await supabase
               .from('questions')
-              .insert({
-                question_text: question.questionType === 'static' ? question.questionText : '',
-                question_type: question.questionType,
-                question_bank_id: bankData.id,
-                ...(question.questionType === 'dynamic' && {
-                  template: question.template,
-                  variable_ranges: question.variableRanges,
-                  option_generation_rules: question.optionGenerationRules,
-                  correct_answer_equation: question.correctAnswerEquation
-                })
-              })
+              .insert(questionData)
               .select()
               .single();
 
@@ -98,14 +104,15 @@ export default function QuestionBankPage() {
             }
 
             // For static questions, insert options
-            if (question.questionType === 'static' && question.options.length > 0) {
+            if (question.question_type === 'static' && question.options.length > 0) {
               const { error: optionsError } = await supabase
                 .from('options')
                 .insert(
                   question.options.map(opt => ({
-                    question_id: questionData.id,
-                    option_text: opt.optionText,
-                    is_correct: opt.isCorrect
+                    question_id: insertedQuestion.id,
+                    option_number: opt.option_number,
+                    option_text: opt.option_text,
+                    is_correct: opt.is_correct
                   }))
                 );
 

@@ -4,13 +4,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Plus, X } from "lucide-react";
-import { DynamicQuestion } from "@/types/questions";
+import {
+  DynamicQuestion,
+  DynamicConditionalQuestion,
+  DynamicTextConditionalQuestion,
+  QuestionFormProps,
+} from "@/types/questions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
-interface DynamicQuestionFormProps {
-  question: DynamicQuestion;
-  onUpdate: (question: DynamicQuestion) => void;
-  onDelete?: () => void;
-  onCancel?: () => void;
+interface DynamicQuestionFormProps extends QuestionFormProps {
+  question: DynamicQuestion | DynamicConditionalQuestion | DynamicTextConditionalQuestion;
 }
 
 export default function DynamicQuestionForm({
@@ -19,236 +22,261 @@ export default function DynamicQuestionForm({
   onDelete,
   onCancel,
 }: DynamicQuestionFormProps) {
-  const [editedQuestion, setEditedQuestion] =
-    useState<DynamicQuestion>(question);
-  const [variableRanges, setVariableRanges] = useState<
-    Array<{ name: string; min: string; max: string }>
-  >([]);
-  const [optionRules, setOptionRules] = useState<
-    Array<{ name: string; rule: string }>
-  >([]);
+  const [editedQuestion, setEditedQuestion] = useState(question);
+  const [variableRanges, setVariableRanges] = useState<Array<{ name: string; min?: string; max?: string; values?: string[] }>>([]);
+  const [optionRules, setOptionRules] = useState<Array<{ condition?: string; rules: any }>>([]);
 
   useEffect(() => {
-    const ranges = Object.entries(
-      question.dynamic_template.variable_ranges
-    ).map(([name, range]) => ({
+    // Parse variable ranges
+    const ranges = Object.entries(question.variable_ranges).map(([name, range]) => ({
       name,
-      min: range.min.toString(),
-      max: range.max.toString(),
+      min: range.min?.toString(),
+      max: range.max?.toString(),
+      values: range.values
     }));
     setVariableRanges(ranges);
 
-    const rules = Object.entries(
-      question.dynamic_template.option_generation_rules
-    ).map(([name, rule]) => ({
-      name,
-      rule,
-    }));
-    setOptionRules(rules);
+    // Parse option rules based on question type
+    if (question.question_type === 'dynamic') {
+      setOptionRules([{ rules: question.option_generation_rules }]);
+    } else if (question.question_type === 'dynamic conditional') {
+      const rules = Object.entries(question.option_generation_rules).map(([condition, ruleSet]) => ({
+        condition,
+        rules: ruleSet
+      }));
+      setOptionRules(rules);
+    } else {
+      const rules = Object.entries(question.option_generation_rules).map(([condition, options]) => ({
+        condition,
+        rules: options
+      }));
+      setOptionRules(rules);
+    }
   }, [question]);
 
   const handleTemplateChange = (value: string) => {
     setEditedQuestion({
       ...editedQuestion,
-      dynamic_template: {
-        ...editedQuestion.dynamic_template,
-        template: value,
-      },
+      template: value
     });
   };
 
-  const handleAddVariableRange = () => {
-    setVariableRanges([...variableRanges, { name: "", min: "", max: "" }]);
-  };
-
-  const handleRemoveVariableRange = (index: number) => {
-    setVariableRanges(variableRanges.filter((_, i) => i !== index));
-  };
-
-  const handleVariableRangeChange = (
-    index: number,
-    field: "name" | "min" | "max",
-    value: string
-  ) => {
+  const handleVariableRangeChange = (index: number, field: string, value: string) => {
     const newRanges = [...variableRanges];
-    newRanges[index] = { ...newRanges[index], [field]: value };
+    if (field === 'name') {
+      newRanges[index].name = value;
+    } else if (field === 'min' || field === 'max') {
+      newRanges[index][field] = value;
+    } else if (field === 'values') {
+      newRanges[index].values = value.split(',').map(v => v.trim());
+    }
     setVariableRanges(newRanges);
+    updateQuestion(newRanges, optionRules);
   };
 
-  const handleAddOptionRule = () => {
-    setOptionRules([...optionRules, { name: "", rule: "" }]);
-  };
-
-  const handleRemoveOptionRule = (index: number) => {
-    setOptionRules(optionRules.filter((_, i) => i !== index));
-  };
-
-  const handleOptionRuleChange = (
-    index: number,
-    field: "name" | "rule",
-    value: string
-  ) => {
+  const handleOptionRuleChange = (index: number, field: string, value: string) => {
     const newRules = [...optionRules];
-    newRules[index] = { ...newRules[index], [field]: value };
+    if (field === 'condition') {
+      newRules[index].condition = value;
+    } else {
+      try {
+        newRules[index].rules = JSON.parse(value);
+      } catch (e) {
+        console.error('Invalid JSON format for rules');
+        return;
+      }
+    }
     setOptionRules(newRules);
+    updateQuestion(variableRanges, newRules);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updatedQuestion: DynamicQuestion = {
+  const updateQuestion = (
+    ranges: Array<{ name: string; min?: string; max?: string; values?: string[] }>,
+    rules: Array<{ condition?: string; rules: any }>
+  ) => {
+    const variableRangesObj: any = {};
+    ranges.forEach(range => {
+      variableRangesObj[range.name] = {
+        min: range.min ? parseInt(range.min) : undefined,
+        max: range.max ? parseInt(range.max) : undefined,
+        values: range.values
+      };
+    });
+
+    let optionRulesObj: any = {};
+    if (editedQuestion.question_type === 'dynamic') {
+      optionRulesObj = rules[0].rules;
+    } else {
+      rules.forEach(rule => {
+        if (rule.condition) {
+          optionRulesObj[rule.condition] = rule.rules;
+        }
+      });
+    }
+
+    const updatedQuestion = {
       ...editedQuestion,
-      dynamic_template: {
-        ...editedQuestion.dynamic_template,
-        variable_ranges: Object.fromEntries(
-          variableRanges.map((range) => [
-            range.name,
-            { min: Number(range.min), max: Number(range.max) },
-          ])
-        ),
-        option_generation_rules: Object.fromEntries(
-          optionRules.map((rule) => [rule.name, rule.rule])
-        ),
-      },
+      variable_ranges: variableRangesObj,
+      option_generation_rules: optionRulesObj
     };
+
     onUpdate(updatedQuestion);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       <div>
-        <Label htmlFor="template">Question Template</Label>
+        <Label>Question Type</Label>
+        <Select
+          value={editedQuestion.question_type}
+          onValueChange={(value: any) => 
+            setEditedQuestion({ ...editedQuestion, question_type: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select question type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="dynamic">Dynamic</SelectItem>
+            <SelectItem value="dynamic conditional">Dynamic Conditional</SelectItem>
+            <SelectItem value="dynamic text conditional">Dynamic Text Conditional</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Template</Label>
         <Textarea
-          id="template"
-          value={editedQuestion.dynamic_template.template}
+          value={editedQuestion.template}
           onChange={(e) => handleTemplateChange(e.target.value)}
-          rows={3}
-          required
+          placeholder="Enter question template with variables in {brackets}"
         />
       </div>
 
       <div>
         <Label>Variable Ranges</Label>
         {variableRanges.map((range, index) => (
-          <div key={index} className="flex items-center space-x-2 mt-2">
+          <div key={index} className="flex gap-2 mt-2">
             <Input
               placeholder="Variable name"
               value={range.name}
-              onChange={(e) =>
-                handleVariableRangeChange(index, "name", e.target.value)
-              }
-              required
+              onChange={(e) => handleVariableRangeChange(index, 'name', e.target.value)}
             />
-            <Input
-              type="number"
-              placeholder="Min"
-              value={range.min}
-              onChange={(e) =>
-                handleVariableRangeChange(index, "min", e.target.value)
-              }
-              required
-            />
-            <Input
-              type="number"
-              placeholder="Max"
-              value={range.max}
-              onChange={(e) =>
-                handleVariableRangeChange(index, "max", e.target.value)
-              }
-              required
-            />
+            {range.values ? (
+              <Input
+                placeholder="Values (comma-separated)"
+                value={range.values.join(', ')}
+                onChange={(e) => handleVariableRangeChange(index, 'values', e.target.value)}
+              />
+            ) : (
+              <>
+                <Input
+                  placeholder="Min"
+                  type="number"
+                  value={range.min}
+                  onChange={(e) => handleVariableRangeChange(index, 'min', e.target.value)}
+                />
+                <Input
+                  placeholder="Max"
+                  type="number"
+                  value={range.max}
+                  onChange={(e) => handleVariableRangeChange(index, 'max', e.target.value)}
+                />
+              </>
+            )}
             <Button
-              type="button"
-              variant="ghost"
+              variant="destructive"
               size="icon"
-              onClick={() => handleRemoveVariableRange(index)}
+              onClick={() => {
+                const newRanges = variableRanges.filter((_, i) => i !== index);
+                setVariableRanges(newRanges);
+                updateQuestion(newRanges, optionRules);
+              }}
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         ))}
         <Button
-          type="button"
           variant="outline"
           size="sm"
-          onClick={handleAddVariableRange}
+          onClick={() => {
+            setVariableRanges([...variableRanges, { name: '', min: '', max: '' }]);
+          }}
           className="mt-2"
         >
-          <Plus className="h-4 w-4 mr-2" /> Add Variable Range
+          <Plus className="h-4 w-4 mr-2" /> Add Variable
         </Button>
       </div>
 
       <div>
         <Label>Option Generation Rules</Label>
         {optionRules.map((rule, index) => (
-          <div key={index} className="flex items-center space-x-2 mt-2">
-            <Input
-              placeholder="Option name"
-              value={rule.name}
-              onChange={(e) =>
-                handleOptionRuleChange(index, "name", e.target.value)
-              }
-              required
-            />
-            <Input
-              placeholder="Generation rule"
-              value={rule.rule}
-              onChange={(e) =>
-                handleOptionRuleChange(index, "rule", e.target.value)
-              }
-              required
+          <div key={index} className="space-y-2 mt-2">
+            {editedQuestion.question_type !== 'dynamic' && (
+              <Input
+                placeholder="Condition"
+                value={rule.condition}
+                onChange={(e) => handleOptionRuleChange(index, 'condition', e.target.value)}
+              />
+            )}
+            <Textarea
+              placeholder="Rules (JSON format)"
+              value={JSON.stringify(rule.rules, null, 2)}
+              onChange={(e) => handleOptionRuleChange(index, 'rules', e.target.value)}
             />
             <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => handleRemoveOptionRule(index)}
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                const newRules = optionRules.filter((_, i) => i !== index);
+                setOptionRules(newRules);
+                updateQuestion(variableRanges, newRules);
+              }}
             >
-              <X className="h-4 w-4" />
+              Remove Rule
             </Button>
           </div>
         ))}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleAddOptionRule}
-          className="mt-2"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Add Option Rule
-        </Button>
+        {editedQuestion.question_type !== 'dynamic' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setOptionRules([...optionRules, { condition: '', rules: {} }]);
+            }}
+            className="mt-2"
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add Rule
+          </Button>
+        )}
       </div>
 
       <div>
-        <Label htmlFor="correct_answer_equation">Correct Answer Equation</Label>
+        <Label>Number of Times to Generate</Label>
         <Input
-          id="correct_answer_equation"
-          value={editedQuestion.dynamic_template.correct_answer_equation}
-          onChange={(e) =>
-            setEditedQuestion({
-              ...editedQuestion,
-              dynamic_template: {
-                ...editedQuestion.dynamic_template,
-                correct_answer_equation: e.target.value,
-              },
-            })
-          }
-          required
+          type="number"
+          value={editedQuestion.no_of_times}
+          onChange={(e) => setEditedQuestion({
+            ...editedQuestion,
+            no_of_times: parseInt(e.target.value)
+          })}
+          min={1}
         />
       </div>
 
-      <div className="flex justify-between">
-        <Button type="submit">Save Question</Button>
-        {onDelete && (
-          <Button type="button" variant="destructive" onClick={onDelete}>
-            Delete Question
-          </Button>
-        )}
+      <div className="flex justify-end gap-2">
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
         )}
+        {onDelete && (
+          <Button variant="destructive" onClick={onDelete}>
+            Delete
+          </Button>
+        )}
+        <Button onClick={() => onUpdate(editedQuestion)}>Save</Button>
       </div>
-    </form>
+    </div>
   );
 }

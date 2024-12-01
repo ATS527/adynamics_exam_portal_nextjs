@@ -117,27 +117,30 @@ export type Database = {
       }
       options: {
         Row: {
-          created_at: string | null
           id: string
-          is_correct: boolean
-          option_text: string
           question_id: string
+          option_number: number
+          option_text: string | null
+          is_correct: boolean
+          created_at: string | null
           updated_at: string | null
         }
         Insert: {
-          created_at?: string | null
           id?: string
-          is_correct?: boolean
-          option_text: string
           question_id: string
+          option_number: number
+          option_text?: string | null
+          is_correct?: boolean
+          created_at?: string | null
           updated_at?: string | null
         }
         Update: {
-          created_at?: string | null
           id?: string
-          is_correct?: boolean
-          option_text?: string
           question_id?: string
+          option_number?: number
+          option_text?: string | null
+          is_correct?: boolean
+          created_at?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -176,40 +179,40 @@ export type Database = {
       }
       questions: {
         Row: {
-          correct_answer_equation: string | null
-          created_at: string | null
           id: string
-          option_generation_rules: Json | null
-          question_bank_id: string | null
-          question_text: string
-          question_type: string
+          question_text: string | null
+          question_type: 'static' | 'dynamic' | 'dynamic conditional' | 'dynamic text conditional'
           template: string | null
-          updated_at: string | null
           variable_ranges: Json | null
+          option_generation_rules: Json | null
+          no_of_times: number
+          created_at: string | null
+          updated_at: string | null
+          metadata: Json | null
         }
         Insert: {
-          correct_answer_equation?: string | null
-          created_at?: string | null
           id?: string
-          option_generation_rules?: Json | null
-          question_bank_id?: string | null
-          question_text: string
-          question_type: string
+          question_text?: string | null
+          question_type?: 'static' | 'dynamic' | 'dynamic conditional' | 'dynamic text conditional'
           template?: string | null
-          updated_at?: string | null
           variable_ranges?: Json | null
+          option_generation_rules?: Json | null
+          no_of_times?: number
+          created_at?: string | null
+          updated_at?: string | null
+          metadata?: Json | null
         }
         Update: {
-          correct_answer_equation?: string | null
-          created_at?: string | null
           id?: string
-          option_generation_rules?: Json | null
-          question_bank_id?: string | null
-          question_text?: string
-          question_type?: string
+          question_text?: string | null
+          question_type?: 'static' | 'dynamic' | 'dynamic conditional' | 'dynamic text conditional'
           template?: string | null
-          updated_at?: string | null
           variable_ranges?: Json | null
+          option_generation_rules?: Json | null
+          no_of_times?: number
+          created_at?: string | null
+          updated_at?: string | null
+          metadata?: Json | null
         }
         Relationships: [
           {
