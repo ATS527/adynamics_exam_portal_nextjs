@@ -104,15 +104,16 @@ export default function QuestionBankPage() {
             }
 
             // For static questions, insert options
-            if (question.question_type === 'static' && question.options.length > 0) {
+            if (question.question_type === 'static') {
+              console.log('Inserting options:', question.options);
               const { error: optionsError } = await supabase
                 .from('options')
                 .insert(
                   question.options.map(opt => ({
                     question_id: insertedQuestion.id,
+                    option_text: opt.option_text || '',
                     option_number: opt.option_number,
-                    option_text: opt.option_text,
-                    is_correct: opt.is_correct
+                    is_correct: !!opt.is_correct
                   }))
                 );
 

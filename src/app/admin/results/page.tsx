@@ -56,7 +56,9 @@ interface AttemptDetail {
   dynamicInfo: {
     template: string
     variableRanges: string
+    rules: string
   } | null
+  questionType: string
 }
 
 // Helper function to format date
@@ -181,7 +183,8 @@ export default function ResultsPage() {
             question_type,
             template,
             variable_ranges,
-            option_generation_rules
+            option_generation_rules,
+            metadata
           )
         `)
         .eq('user_exam_attempt_id', attempt.id)
@@ -194,23 +197,64 @@ export default function ResultsPage() {
 
       // Transform the data into attempt details
         const details: AttemptDetail[] = responses?.map((response: any) => {
-        const question = response.questions
-        const questionText = question.question_text
-        let dynamicInfo = null
+        const question = response.questions;
+        let questionText = '';
+        let dynamicInfo = null;
 
-        // If it's a dynamic question, prepare the dynamic info
-        if (question.question_type === 'dynamic' && question.template) {
-          const variableRanges = question.variable_ranges || {}
-          const variableValues = Object.entries(variableRanges)
-                .map(([name, range]: [string, any]) => (
-              `${name}: ${range.min}-${range.max}`
-            ))
-            .join(', ')
+        // Handle different question types
+        switch (question.question_type) {
+          case 'static':
+            questionText = question.question_text;
+            break;
           
-          dynamicInfo = {
-            template: question.template,
-            variableRanges: variableValues
-          }
+          case 'dynamic':
+          case 'dynamic conditional':
+          case 'dynamic text conditional':
+            // Try to get the generated question from metadata first
+            const metadata = response.metadata || {};
+            questionText = metadata.generated_question || question.template || question.question_text;
+            
+            // Prepare dynamic info
+            const variableRanges = question.variable_ranges || {};
+            let variableValues = '';
+            
+            if (question.question_type === 'dynamic') {
+              // For simple dynamic questions, show numeric ranges
+              variableValues = Object.entries(variableRanges)
+                .map(([name, range]: [string, any]) => (
+                  `${name}: ${range.min}-${range.max}`
+                ))
+                .join(', ');
+            } else if (question.question_type === 'dynamic conditional') {
+              // For conditional questions, show both enum and range values
+              const enumValues = variableRanges.enum_values || {};
+              const rangeValues = variableRanges.range_values || {};
+              
+              variableValues = [
+                ...Object.entries(enumValues).map(([name, values]: [string, any]) => 
+                  `${name}: [${values.join(', ')}]`
+                ),
+                ...Object.entries(rangeValues).map(([name, range]: [string, any]) => 
+                  `${name}: ${range.min}-${range.max}`
+                )
+              ].join(', ');
+            } else {
+              // For text conditional questions, show enum values
+              const enumValues = variableRanges.enum_values || {};
+              variableValues = Object.entries(enumValues)
+                .map(([name, values]: [string, any]) => 
+                  `${name}: [${values.join(', ')}]`
+                )
+                .join(', ');
+            }
+            
+            dynamicInfo = {
+              template: question.template || '',
+              variableRanges: variableValues,
+              rules: question.option_generation_rules ? 
+                JSON.stringify(question.option_generation_rules, null, 2) : ''
+            };
+            break;
         }
 
         return {
@@ -219,10 +263,11 @@ export default function ResultsPage() {
           correct_option: response.correct_answer,
           status: response.is_correct ? 'correct' : 
                  response.user_response ? 'wrong' : 'skipped',
-          isDynamic: question.question_type === 'dynamic',
-          dynamicInfo
-        }
-      }) || []
+          isDynamic: question.question_type !== 'static',
+          dynamicInfo,
+          questionType: question.question_type
+        };
+      }) || [];
       
       setAttemptDetails(details)
     } catch (err: any) {
@@ -343,19 +388,31 @@ export default function ResultsPage() {
                     <p className="text-gray-800">{detail.question}</p>
                     {detail.isDynamic && detail.dynamicInfo && (
                       <div className="mt-2 space-y-1 text-sm bg-gray-50 p-3 rounded-md">
-                        <p className="font-medium text-gray-600">Dynamic Question Details:</p>
+                        <p className="font-medium text-gray-600">
+                          Dynamic Question Details ({detail.questionType}):
+                        </p>
                         <p className="text-gray-600">
                           <span className="font-medium">Template:</span>{" "}
                           <code className="bg-gray-100 px-1 py-0.5 rounded">
                             {detail.dynamicInfo.template}
                           </code>
                         </p>
-                        <p className="text-gray-600">
-                          <span className="font-medium">Variable Ranges:</span>{" "}
-                          <code className="bg-gray-100 px-1 py-0.5 rounded">
-                            {detail.dynamicInfo.variableRanges}
-                          </code>
-                        </p>
+                        {detail.dynamicInfo.variableRanges && (
+                          <p className="text-gray-600">
+                            <span className="font-medium">Variable Ranges:</span>{" "}
+                            <code className="bg-gray-100 px-1 py-0.5 rounded">
+                              {detail.dynamicInfo.variableRanges}
+                            </code>
+                          </p>
+                        )}
+                        {detail.dynamicInfo.rules && (
+                          <p className="text-gray-600">
+                            <span className="font-medium">Generation Rules:</span>{" "}
+                            <pre className="bg-gray-100 px-2 py-1 rounded overflow-x-auto">
+                              {detail.dynamicInfo.rules}
+                            </pre>
+                          </p>
+                        )}
                       </div>
                     )}
                     <div className="grid grid-cols-2 gap-4 mt-3">

@@ -28,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Question {
   id: string
@@ -61,10 +62,10 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [newQuestionText, setNewQuestionText] = useState('')
-  const [newQuestionType, setNewQuestionType] = useState('static')
+  const [newQuestionType, setNewQuestionType] = useState<'static' | 'dynamic' | 'dynamic conditional' | 'dynamic text conditional'>('static')
   const [template, setTemplate] = useState('')
   const [variableRanges, setVariableRanges] = useState('')
-  const [correctAnswerEquation, setCorrectAnswerEquation] = useState('')
+  const [optionGenerationRules, setOptionGenerationRules] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -100,15 +101,18 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
 
   const handleCreateQuestion = async () => {
     if (newQuestionType === 'static' && !newQuestionText.trim()) return
-    if (newQuestionType === 'dynamic' && (!template.trim() || !variableRanges.trim() || !correctAnswerEquation.trim())) return
+    if (newQuestionType !== 'static' && (!template.trim() || !variableRanges.trim() || !optionGenerationRules.trim())) return
 
     try {
       let variableRangesObj = {}
-      if (newQuestionType === 'dynamic') {
+      let optionRulesObj = {}
+
+      if (newQuestionType !== 'static') {
         try {
           variableRangesObj = JSON.parse(variableRanges)
+          optionRulesObj = JSON.parse(optionGenerationRules)
         } catch (e) {
-          setError('Invalid variable ranges format. Please use valid JSON.')
+          setError('Invalid JSON format in variable ranges or option rules')
           return
         }
       }
@@ -116,14 +120,15 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
       const { data, error } = await supabase
         .from('questions')
         .insert({
-          question_text: newQuestionType === 'static' ? newQuestionText : '',
-          question_type: newQuestionType,
           question_bank_id: id,
-          ...(newQuestionType === 'dynamic' && {
-            template,
-            variable_ranges: variableRangesObj,
-            correct_answer_equation: correctAnswerEquation
-          })
+          question_type: newQuestionType,
+          ...(newQuestionType === 'static'
+            ? { question_text: newQuestionText }
+            : {
+                template,
+                variable_ranges: variableRangesObj,
+                option_generation_rules: optionRulesObj,
+              }),
         })
         .select()
         .single()
@@ -134,11 +139,11 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
       setNewQuestionText('')
       setTemplate('')
       setVariableRanges('')
-      setCorrectAnswerEquation('')
+      setOptionGenerationRules('')
       setIsCreateDialogOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating question:', error)
-      setError('Failed to create question')
+      setError(error.message)
     }
   }
 
@@ -179,6 +184,45 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
     )
   }
 
+  const getTemplateExample = (type: string) => {
+    switch (type) {
+      case 'dynamic':
+        return 'What is {x} + {y}?'
+      case 'dynamic conditional':
+        return 'Find Track (M)? If Track (T) is {x}° and Variation is {y}°{direction}'
+      case 'dynamic text conditional':
+        return 'What happens to Magnetic Compass when in the {hemisphere} Hemisphere and Accelerating in {direction} Direction?'
+      default:
+        return ''
+    }
+  }
+
+  const getVariableRangesExample = (type: string) => {
+    switch (type) {
+      case 'dynamic':
+        return '{"x": {"min": 1, "max": 10}, "y": {"min": 1, "max": 10}}'
+      case 'dynamic conditional':
+        return '{"range_values":{"x":{"min":0,"max":180},"y":{"min":0,"max":10}},"enum_values":{"direction":["W","E"]}}'
+      case 'dynamic text conditional':
+        return '{"enum_values":{"hemisphere":["Northern","Southern"],"direction":["North East","East"]}}'
+      default:
+        return ''
+    }
+  }
+
+  const getOptionRulesExample = (type: string) => {
+    switch (type) {
+      case 'dynamic':
+        return '{"correct": ["{x}+{y}","units"],"wrong1": ["{x} - {y}", "units"], "wrong2": ["{x} * {y}", "units"], "wrong3": ["{x} + {y} + 1", "units"]}'
+      case 'dynamic conditional':
+        return '{"direction === W":[{"correct":["x-y","units"],"wrong1":["{x} - {y} - 1","units"],"wrong2":["{x} * {y}","units"],"wrong3":["{x}+{y}","units"]}],"direction === E":[{"correct":["x+y","units"],"wrong1":["{x} + {y} + 1","units"],"wrong2":["{x} / {y}","units"],"wrong3":["{x}-{y}","units"]}]}'
+      case 'dynamic text conditional':
+        return '{"hemisphere === Northern && direction === North East":{"correct":"Apparent Turn to North Pole, Compass Turns Clockwise, Liquid Swirl increases error","wrong1":"Wrong Option 1","wrong2":"Wrong Option 2","wrong3":"Wrong Option 3"}}'
+      default:
+        return ''
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -208,14 +252,27 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>Question Type</Label>
-                  <select
+                  <Select
                     value={newQuestionType}
-                    onChange={(e) => setNewQuestionType(e.target.value)}
-                    className="w-full border rounded-md p-2"
+                    onValueChange={(value: any) => {
+                      setNewQuestionType(value)
+                      // Reset fields when type changes
+                      setNewQuestionText('')
+                      setTemplate('')
+                      setVariableRanges('')
+                      setOptionGenerationRules('')
+                    }}
                   >
-                    <option value="static">Static</option>
-                    <option value="dynamic">Dynamic</option>
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select question type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="static">Static</SelectItem>
+                      <SelectItem value="dynamic">Dynamic</SelectItem>
+                      <SelectItem value="dynamic conditional">Dynamic Conditional</SelectItem>
+                      <SelectItem value="dynamic text conditional">Dynamic Text Conditional</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {newQuestionType === 'static' ? (
@@ -224,41 +281,44 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
                     <Textarea
                       value={newQuestionText}
                       onChange={(e) => setNewQuestionText(e.target.value)}
-                      placeholder="Enter your question here..."
+                      placeholder="Enter your question text"
                     />
                   </div>
                 ) : (
                   <>
                     <div className="space-y-2">
-                      <Label>Template</Label>
+                      <Label>Question Template</Label>
                       <Textarea
                         value={template}
                         onChange={(e) => setTemplate(e.target.value)}
-                        placeholder="Enter template with variables in {braces}..."
+                        placeholder="Enter template with variables in {brackets}"
                       />
                       <p className="text-sm text-gray-500">
-                        Example: What is {'{x}'} + {'{y}'}?
+                        Example: {getTemplateExample(newQuestionType)}
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Variable Ranges (JSON format)</Label>
+                      <Label>Variable Ranges</Label>
                       <Textarea
                         value={variableRanges}
                         onChange={(e) => setVariableRanges(e.target.value)}
-                        placeholder='{"x": {"min": 1, "max": 10}, "y": {"min": 1, "max": 10}}'
+                        placeholder="Enter variable ranges in JSON format"
                       />
+                      <p className="text-sm text-gray-500">
+                        Example: {getVariableRangesExample(newQuestionType)}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Correct Answer Equation</Label>
-                      <Input
-                        value={correctAnswerEquation}
-                        onChange={(e) => setCorrectAnswerEquation(e.target.value)}
-                        placeholder="x + y"
+                      <Label>Option Generation Rules</Label>
+                      <Textarea
+                        value={optionGenerationRules}
+                        onChange={(e) => setOptionGenerationRules(e.target.value)}
+                        placeholder="Enter option generation rules in JSON format"
                       />
                       <p className="text-sm text-gray-500">
-                        Use variable names in your equation
+                        Example: {getOptionRulesExample(newQuestionType)}
                       </p>
                     </div>
                   </>
@@ -266,10 +326,16 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
+                <Button
+                  onClick={handleCreateQuestion}
+                  disabled={
+                    newQuestionType === 'static'
+                      ? !newQuestionText.trim()
+                      : !template.trim() || !variableRanges.trim() || !optionGenerationRules.trim()
+                  }
+                >
+                  Create Question
                 </Button>
-                <Button onClick={handleCreateQuestion}>Create</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -319,11 +385,7 @@ export default function QuestionBankViewClient({ id }: { id: string }) {
             <div className="flex justify-between items-start">
               <div>
                 <div className="font-medium">
-                  {question.question_type === 'static' ? (
-                    question.question_text
-                  ) : (
-                    question.template
-                  )}
+                  {question.question_text}
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
                   Type: {question.question_type}
