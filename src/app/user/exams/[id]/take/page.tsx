@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 
@@ -22,6 +23,7 @@ interface Question {
   variable_ranges?: any
   option_generation_rules?: any
   options?: any[]
+  no_of_times?: number
 }
 
 interface StaticOption {
@@ -44,6 +46,7 @@ interface Exam {
   duration_minutes: number
   force_time: number
   exam_questions: ExamQuestion[]
+  question_order?: Record<string, number>  // Track original question order
 }
 
 interface GeneratedQuestion {
@@ -53,7 +56,20 @@ interface GeneratedQuestion {
     option_text: string
     is_correct: boolean
   }[]
+  exam_question_id: string
+  original_question_id: string
+  instance_index: number
 }
+
+// Add a utility function for shuffling arrays
+const shuffleArray = <T extends any>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 const safeEvaluate = (expression: string | [string, string], variables: Record<string, number>): { value: string, unit: string } => {
   try {
@@ -85,13 +101,16 @@ const safeEvaluate = (expression: string | [string, string], variables: Record<s
 
 const generateQuestion = (question: Question): GeneratedQuestion => {
   if (question.question_type === 'static') {
+    // Shuffle options for static questions
+    const shuffledOptions = shuffleArray(question.options).map((option: any) => ({
+      option_text: option.option_text,
+      is_correct: option.is_correct
+    }));
+
     return {
       id: question.id,
       question_text: question.question_text,
-      options: question.options.map((option: any) => ({
-        option_text: option.option_text,
-        is_correct: option.is_correct
-      }))
+      options: shuffledOptions
     }
   } else if (question.question_type === 'dynamic') {
     // Generate random variables based on ranges
@@ -162,9 +181,9 @@ const generateQuestion = (question: Question): GeneratedQuestion => {
       uniqueOptions.splice(0, uniqueOptions.length, correctOption, ...selectedIncorrect)
     }
 
-    // Shuffle the options
-    const shuffledOptions = [...uniqueOptions].sort(() => Math.random() - 0.5)
-
+    // Shuffle the generated options
+    const shuffledOptions = shuffleArray(uniqueOptions);
+    
     return {
       id: question.id,
       question_text: questionText,
@@ -280,9 +299,9 @@ const generateQuestion = (question: Question): GeneratedQuestion => {
       matchingOptions = []
     }
 
-    // Shuffle the options
-    const shuffledOptions = [...matchingOptions].sort(() => Math.random() - 0.5)
-
+    // Shuffle the generated options
+    const shuffledOptions = shuffleArray(matchingOptions);
+    
     return {
       id: question.id,
       question_text: questionText,
@@ -314,6 +333,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   const [submissionError, setSubmissionError] = useState<string | null>(null)
   const [submissionSuccess, setSubmissionSuccess] = useState(false)
   const [confirmedQuestions, setConfirmedQuestions] = useState<Set<string>>(new Set())
+  const [questionOrder, setQuestionOrder] = useState<Record<string, number>>({});
   const router = useRouter()
 
   // Get current question from exam state
@@ -341,7 +361,8 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               template,
               variable_ranges,
               option_generation_rules,
-              options (*)
+              options (*),
+              no_of_times
             )
           )
         `)
@@ -350,29 +371,43 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
 
       if (examError) throw examError
 
-      // Transform exam_questions to have nested question data
-      const transformedExamData = {
-        ...examData,
-        exam_questions: examData.exam_questions.map((eq: any) => ({
+      // Transform exam_questions and generate multiple instances based on no_of_times
+      const expandedExamQuestions = examData.exam_questions.flatMap((eq: any) => {
+        const timesToGenerate = eq.question.no_of_times || 1;
+        return Array(timesToGenerate).fill(null).map((_, instanceIndex) => ({
           ...eq,
+          id: `${eq.id}_${instanceIndex}`,
           question: {
             ...eq.question,
+            id: `${eq.question.id}_${instanceIndex}`,
             options: eq.question.options || []
           }
-        }))
+        }));
+      });
+
+      // Shuffle the expanded questions
+      const shuffledExamQuestions = shuffleArray(expandedExamQuestions);
+
+      const transformedExamData = {
+        ...examData,
+        exam_questions: shuffledExamQuestions
       };
       
       setExam(transformedExamData)
       setTimeLeft(examData.duration_minutes * 60)
       setForceTimeLeft(examData.force_time)
 
-      // Generate questions using our new question generator
+      // Generate questions using our question generator
       const generated = transformedExamData.exam_questions.map((eq: ExamQuestion) => {
         const { question } = eq;
         try {
+          const generatedQuestion = generateQuestion(question);
           return {
-            ...generateQuestion(question),
-            exam_question_id: eq.id
+            ...generatedQuestion,
+            id: eq.question.id,
+            exam_question_id: eq.id,
+            original_question_id: question.id.split('_')[0],
+            instance_index: parseInt(question.id.split('_')[1] || '0')
           };
         } catch (error) {
           console.error('Error generating question:', error);
@@ -380,12 +415,24 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
             id: question.id,
             question_text: 'Error generating question',
             options: [],
-            exam_question_id: eq.id
+            exam_question_id: eq.id,
+            original_question_id: question.id.split('_')[0],
+            instance_index: parseInt(question.id.split('_')[1] || '0')
           };
         }
       });
 
-      setGeneratedQuestions(generated)
+      // Store the original order for submission
+      const questionOrder = shuffledExamQuestions.map(eq => ({
+        id: eq.question.id,
+        originalIndex: examData.exam_questions.findIndex(
+          (original: any) => original.question.id.split('_')[0] === eq.question.id.split('_')[0]
+        )
+      }));
+      
+      setGeneratedQuestions(generated);
+      // Store the question order in state
+      setQuestionOrder(questionOrder.reduce((acc, curr) => ({ ...acc, [curr.id]: curr.originalIndex }), {}));
       setIsLoading(false)
     } catch (error) {
       console.error('Error fetching exam:', error)
@@ -399,24 +446,41 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   }, [fetchExamDetails])
 
   useEffect(() => {
-    if (timeLeft === null) return
+    if (timeLeft === null || submissionSuccess || isLoading) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime === null || prevTime <= 0) {
-          clearInterval(timer)
-          handleSubmit()
-          return 0
+      setTimeLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 0) {
+          clearInterval(timer);
+          handleSubmit();
+          return 0;
         }
-        return prevTime - 1
-      })
-    }, 1000)
+        return prev - 1;
+      });
+    }, 1000);
 
-    return () => clearInterval(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft])
+    return () => clearInterval(timer);
+  }, [timeLeft, submissionSuccess, isLoading]);
 
-  // Start force timer when visiting a new question
+  useEffect(() => {
+    if (timeLeft === null || timeLeft > 300) return;
+    
+    if (timeLeft === 300) {
+      // toast({
+      //   title: "5 minutes remaining",
+      //   description: "Your exam will be automatically submitted when the time is up.",
+      //   variant: "destructive",
+      // });
+    } else if (timeLeft === 60) {
+      // toast({
+      //   title: "1 minute remaining",
+      //   description: "Your exam will be automatically submitted soon.",
+      //   variant: "destructive",
+      // });
+    }
+  }, [timeLeft]);
+
   useEffect(() => {
     if (!exam || !currentQuestion) return;
 
@@ -429,7 +493,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
     }
   }, [exam, currentQuestion]);
 
-  // Handle force timer countdown
   useEffect(() => {
     if (forceTimeLeft === null || forceTimeLeft === 0) return;
 
@@ -443,7 +506,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
     return () => clearInterval(timer);
   }, [forceTimeLeft]);
 
-  // Prevent navigation during force timer
   const isNavigationLocked = forceTimeLeft !== null && forceTimeLeft > 0;
 
   const handleQuestionChange = (index: number) => {
@@ -473,6 +535,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
 
   const handleConfirmQuestion = () => {
     if (!currentQuestion) return;
+    
     setConfirmedQuestions(prev => {
       const newSet = new Set(prev);
       newSet.add(currentQuestion.id);
@@ -498,18 +561,20 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   };
 
   const handleSubmit = async () => {
-    if (!exam) return
-
-    setIsSubmitting(true)
-    setSubmissionError(null)
-
     try {
-      const unansweredQuestions = exam.exam_questions.filter(
-        (q) => !answers[q.question_id]
-      )
+      setIsSubmitting(true);
+      setSubmissionError(null);
 
-      if (unansweredQuestions.length > 0) {
-        throw new Error(`Please answer all questions before submitting. ${unansweredQuestions.length} question(s) unanswered.`)
+      const unansweredQuestions = exam.exam_questions.filter(
+        (eq) => !answers[eq.question.id]
+      );
+
+      if (!exam.force_time && unansweredQuestions.length > 0 && timeLeft > 0) {
+        setSubmissionError(
+          `Please answer all questions before submitting. ${unansweredQuestions.length} questions remain unanswered.`
+        );
+        setIsSubmitting(false);
+        return;
       }
 
       const { data: session } = await supabase.auth.getSession()
@@ -517,19 +582,15 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         throw new Error('User not authenticated')
       }
 
-      // Calculate timestamps
       const now = new Date()
       const timeTakenSeconds = Math.floor(exam.duration_minutes * 60 - (timeLeft ?? 0))
       
-      // Format dates in ISO format for Supabase timestamptz
       const formatDate = (date: Date) => {
         return date.toISOString()
       }
 
-      // Calculate start time based on current time minus time taken
       const startTime = new Date(now.getTime() - (timeTakenSeconds * 1000))
 
-      // Calculate exam statistics
       let correctAnswers = 0
       let wrongAnswers = 0
       let skippedQuestions = 0
@@ -555,7 +616,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         }
       })
 
-      // Calculate score as percentage
       const totalQuestions = exam.exam_questions.length
       const score = (correctAnswers / totalQuestions) * 100
 
@@ -586,8 +646,14 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       }
 
       const questionResponses = Object.entries(answers).map(([questionId, userResponse]) => {
-        const examQuestion = exam.exam_questions.find(q => q.question_id === questionId);
+        const [baseQuestionId, instanceIndex] = questionId.split('_');
+        const examQuestion = exam.exam_questions.find(q => q.question.id === questionId);
         const question = examQuestion?.question;
+        
+        const generatedQuestion = generatedQuestions.find(gq => 
+          gq.exam_question_id === examQuestion?.id && 
+          gq.id === questionId
+        );
         
         let options = [];
         let generatedQuestionText = null;
@@ -596,24 +662,18 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         if (question?.question_type === 'static') {
           options = question.options || [];
           generatedQuestionText = question.question_text;
-        } else {
-          // For all dynamic question types, find the generated question using exam_question_id
-          const generatedQuestion = generatedQuestions.find(gq => gq.exam_question_id === examQuestion?.id);
-          if (generatedQuestion) {
-            options = generatedQuestion.options || [];
-            generatedQuestionText = generatedQuestion.question_text;
-            
-            // If generated question text is not available, try to get it from the template
-            if (!generatedQuestionText && ['dynamic conditional', 'dynamic text conditional'].includes(question?.question_type || '')) {
-              generatedQuestionText = templateText;
-            }
+        } else if (generatedQuestion) {
+          options = generatedQuestion.options || [];
+          generatedQuestionText = generatedQuestion.question_text;
+          
+          if (!generatedQuestionText && ['dynamic conditional', 'dynamic text conditional'].includes(question?.question_type || '')) {
+            generatedQuestionText = templateText;
           }
         }
         
         const selectedOption = options.find(opt => opt.option_text === userResponse);
         const correctOption = options.find(opt => opt.is_correct);
         
-        // Create metadata object with additional information
         const metadata = {
           question_type: question?.question_type || 'static',
           template: templateText,
@@ -621,34 +681,24 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
           original_question_text: question?.question_text,
           options: options,
           variable_ranges: question?.variable_ranges,
-          option_generation_rules: question?.option_generation_rules
+          option_generation_rules: question?.option_generation_rules,
+          instance_index: parseInt(instanceIndex || '0'),
+          original_question_id: baseQuestionId,
+          no_of_times: question?.no_of_times || 1
         };
-        
-        // For debugging
-        console.log('Question Response:', {
-          id: questionId,
-          type: question?.question_type,
-          template: templateText,
-          generated: generatedQuestionText,
-          userResponse,
-          correctAnswer: correctOption?.option_text
-        });
         
         return {
           user_exam_attempt_id: savedAttempt.id,
-          question_id: questionId,
+          question_id: baseQuestionId,
           user_response: userResponse,
           correct_answer: correctOption?.option_text || null,
           is_correct: selectedOption?.is_correct || false,
           metadata: metadata
-        }
+        };
       });
 
-      console.log('Saving question responses:', questionResponses);
-
-      // First, ensure we have the correct table structure
       const { error: responsesError } = await supabase
-        .from('user_question_responses')
+        .from('user_exam_responses')
         .insert(questionResponses)
 
       if (responsesError) {
@@ -726,13 +776,13 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
           <Button
             variant="outline"
             onClick={handleResetQuestion}
-            disabled={!hasAnswer || isNavigationLocked}
+            disabled={!hasAnswer}
           >
             Reset
           </Button>
           <Button
             onClick={handleConfirmQuestion}
-            disabled={!hasAnswer || isConfirmed || isNavigationLocked}
+            disabled={!hasAnswer || isConfirmed}
           >
             Confirm Answer
           </Button>
@@ -754,7 +804,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
                 Exam Duration: {Math.floor((timeLeft ?? 0) / 60)}:{((timeLeft ?? 0) % 60).toString().padStart(2, '0')}
               </div>
             </div>
-            {isNavigationLocked && (
+            {forceTimeLeft !== null && forceTimeLeft > 0 && (
               <div className={cn(
                 "text-sm font-medium",
                 forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
@@ -791,7 +841,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
             <Button 
               onClick={() => setShowConfirmDialog(true)}
               variant="destructive"
-              disabled={isNavigationLocked}
             >
               Submit Exam
             </Button>
@@ -807,20 +856,48 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
           
           return (
             <Button
-              key={eq.id}
-              variant={isConfirmed ? "success" : isAnswered ? "secondary" : isCurrent ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleQuestionChange(index)}
-              disabled={isNavigationLocked}
+              key={eq.question.id}
+              variant={
+                isConfirmed
+                  ? 'default'
+                  : isAnswered
+                  ? 'secondary'
+                  : 'outline'
+              }
               className={cn(
-                isNavigationLocked && "cursor-not-allowed opacity-50",
-                isCurrent && "ring-2 ring-primary"
+                'w-10 h-10',
+                isCurrent && 'ring-2 ring-primary',
+                isConfirmed && 'bg-green-500 hover:bg-green-600'
               )}
+              onClick={() => handleQuestionChange(index)}
             >
               {index + 1}
             </Button>
           );
         })}
+      </div>
+
+      <div className="mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">
+            Question {currentQuestionIndex + 1}
+            {currentQuestion?.question_type !== 'static' && (
+              <span className="ml-2 text-sm text-gray-500">
+                (Dynamic Question)
+              </span>
+            )}
+          </h3>
+          <Badge variant={
+            confirmedQuestions.has(currentQuestion?.id || '') 
+              ? "default" 
+              : "secondary"
+          }>
+            {confirmedQuestions.has(currentQuestion?.id || '') 
+              ? "Confirmed" 
+              : "Not Confirmed"
+            }
+          </Badge>
+        </div>
       </div>
 
       {timeLeft !== null && timeLeft <= 300 && (
