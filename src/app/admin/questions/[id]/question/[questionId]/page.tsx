@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { Card } from '@/components/ui/card'
 
 interface Props {
@@ -11,8 +10,7 @@ interface Props {
 }
 
 export default async function QuestionPage({ params: { id, questionId } }: Props) {
-  const cookieStore = cookies()
-  const supabase = createClient(cookieStore)
+  const supabase = createServerSupabaseClient()
 
   const { data: question, error } = await supabase
     .from('questions')

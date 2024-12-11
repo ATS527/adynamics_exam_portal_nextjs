@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { cookies } from 'next/headers'
 import { generateQuestion } from '@/lib/question-generator'
 import { NextResponse } from 'next/server'
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
 
     const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = createServerSupabaseClient()
 
     // Fetch all questions from the question bank
     const { data: questions, error: fetchError } = await supabase
