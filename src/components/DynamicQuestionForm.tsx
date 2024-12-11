@@ -10,7 +10,7 @@ import {
   DynamicTextConditionalQuestion,
   QuestionFormProps,
 } from "@/types/questions";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DynamicQuestionFormProps extends QuestionFormProps {
   question: DynamicQuestion | DynamicConditionalQuestion | DynamicTextConditionalQuestion;
