@@ -18,6 +18,7 @@ interface Question {
   template?: string
   variable_ranges?: Record<string, { min: number; max: number } | { enum_values: string[] } | { enums: string[] }>
   option_generation_rules?: Record<string, any>
+  no_of_times?: number
 }
 
 interface Option {
@@ -43,6 +44,7 @@ export default function EditQuestionClient({
   const [options, setOptions] = useState<Option[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [noOfTimes, setNoOfTimes] = useState(1)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -56,6 +58,9 @@ export default function EditQuestionClient({
         if (questionData) {
           setQuestion(questionData)
           setQuestionType(questionData.question_type)
+          
+          // Set no_of_times, default to 1 if not present
+          setNoOfTimes(questionData.no_of_times || 1)
           
           if (questionData.question_type === 'static') {
             setQuestionText(questionData.question_text || '')
@@ -127,6 +132,7 @@ export default function EditQuestionClient({
         },
         body: JSON.stringify({
           question_type: questionType,
+          no_of_times: noOfTimes,  // Add no_of_times to the payload
           ...(questionType === 'static'
             ? {
                 question_text: questionText,
@@ -272,6 +278,23 @@ export default function EditQuestionClient({
               />
               <p className="text-sm text-gray-500">
                 Example: {getOptionRulesExample(questionType)}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="noOfTimes">Number of Questions to Generate</Label>
+              <Input
+                id="noOfTimes"
+                type="number"
+                min="1"
+                max="100"
+                value={noOfTimes}
+                onChange={(e) => setNoOfTimes(Number(e.target.value))}
+                placeholder="Enter number of questions to generate"
+                className="w-full"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                How many variations of this question should be generated?
               </p>
             </div>
           </>

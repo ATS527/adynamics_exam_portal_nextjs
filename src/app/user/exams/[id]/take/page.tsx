@@ -40,15 +40,6 @@ interface ExamQuestion {
   question: Question
 }
 
-interface Exam {
-  id: string
-  title: string
-  duration_minutes: number
-  force_time: number
-  exam_questions: ExamQuestion[]
-  question_order?: Record<string, number>  // Track original question order
-}
-
 interface GeneratedQuestion {
   id: string
   question_text: string
@@ -562,78 +553,28 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
 
   const handleSubmit = async () => {
     try {
-      setIsSubmitting(true);
-      setSubmissionError(null);
-
-      const unansweredQuestions = exam.exam_questions.filter(
-        (eq) => !answers[eq.question.id]
-      );
-
-      if (!exam.force_time && unansweredQuestions.length > 0 && timeLeft > 0) {
-        setSubmissionError(
-          `Please answer all questions before submitting. ${unansweredQuestions.length} questions remain unanswered.`
-        );
-        setIsSubmitting(false);
-        return;
-      }
+      setIsSubmitting(true)
 
       const { data: session } = await supabase.auth.getSession()
       if (!session.session) {
         throw new Error('User not authenticated')
       }
 
-      const now = new Date()
-      const timeTakenSeconds = Math.floor(exam.duration_minutes * 60 - (timeLeft ?? 0))
-      
-      const formatDate = (date: Date) => {
-        return date.toISOString()
-      }
+      // Calculate start time based on exam duration and time left
+      const totalExamSeconds = exam.duration_minutes * 60
+      const remainingSeconds = timeLeft ?? 0
+      const elapsedSeconds = totalExamSeconds - remainingSeconds
+      const startTime = new Date(Date.now() - (elapsedSeconds * 1000))
 
-      const startTime = new Date(now.getTime() - (timeTakenSeconds * 1000))
-
-      let correctAnswers = 0
-      let wrongAnswers = 0
-      let skippedQuestions = 0
-
-      exam.exam_questions.forEach((eq) => {
-        const questionId = eq.question.id
-        const userAnswer = answers[questionId]
-        
-        if (!userAnswer) {
-          skippedQuestions++
-          return
-        }
-
-        const options = eq.question.question_type === 'static' 
-          ? eq.question.options || []
-          : generatedQuestions.find(gq => gq.exam_question_id === eq.id)?.options || []
-        
-        const selectedOption = options.find(opt => opt.option_text === userAnswer)
-        if (selectedOption?.is_correct) {
-          correctAnswers++
-        } else {
-          wrongAnswers++
-        }
-      })
-
-      const totalQuestions = exam.exam_questions.length
-      const score = (correctAnswers / totalQuestions) * 100
-
+      // Prepare attempt data
       const attemptData = {
         exam_id: exam.id,
         user_id: session.session.user.id,
-        start_time: formatDate(startTime),
-        end_time: formatDate(now),
-        total_questions: totalQuestions,
-        time_taken: timeTakenSeconds,
-        score: score,
-        correct_answers: correctAnswers,
-        wrong_answers: wrongAnswers,
-        skipped_questions: skippedQuestions
+        start_time: startTime.toISOString(),
+        end_time: new Date().toISOString(),
       }
 
-      console.log('Submitting attempt data:', attemptData)
-
+      // Insert exam attempt
       const { data: savedAttempt, error: attemptError } = await supabase
         .from('user_exam_attempts')
         .insert(attemptData)
@@ -641,69 +582,99 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         .single()
 
       if (attemptError) {
-        console.error('Attempt Error:', attemptError, 'Attempt Data:', attemptData)
+        console.error('Attempt Error:', attemptError)
         throw new Error('Failed to save exam attempt')
       }
 
-      const questionResponses = Object.entries(answers).map(([questionId, userResponse]) => {
-        const [baseQuestionId, instanceIndex] = questionId.split('_');
-        const examQuestion = exam.exam_questions.find(q => q.question.id === questionId);
-        const question = examQuestion?.question;
+      // Helper function to extract base UUID
+      const extractBaseUuid = (id: string) => {
+        // Split by underscore and take the first part (base UUID)
+        const parts = id.split('_')
+        return parts[0]
+      }
+
+      // Calculate exam results
+      const totalQuestions = exam.exam_questions.length
+      const processedQuestions = exam.exam_questions.map((eq) => {
+        const questionId = eq.question.id
+        const userAnswer = answers[questionId]
         
-        const generatedQuestion = generatedQuestions.find(gq => 
-          gq.exam_question_id === examQuestion?.id && 
-          gq.id === questionId
-        );
-        
-        let options = [];
-        let generatedQuestionText = null;
-        let templateText = question?.template || '';
-        
-        if (question?.question_type === 'static') {
-          options = question.options || [];
-          generatedQuestionText = question.question_text;
-        } else if (generatedQuestion) {
-          options = generatedQuestion.options || [];
-          generatedQuestionText = generatedQuestion.question_text;
-          
-          if (!generatedQuestionText && ['dynamic conditional', 'dynamic text conditional'].includes(question?.question_type || '')) {
-            generatedQuestionText = templateText;
+        // If no answer provided, mark as skipped
+        if (!userAnswer) {
+          return { 
+            status: 'skipped',
+            questionId: extractBaseUuid(questionId),
+            userAnswer: null,
+            isCorrect: false,
+            correctAnswer: null
           }
         }
+
+        // For dynamic questions, find the correct options
+        const options = eq.question.question_type === 'static' 
+          ? eq.question.options || []
+          : generatedQuestions.find(gq => gq.exam_question_id === eq.id)?.options || []
         
-        const selectedOption = options.find(opt => opt.option_text === userResponse);
-        const correctOption = options.find(opt => opt.is_correct);
-        
-        const metadata = {
-          question_type: question?.question_type || 'static',
-          template: templateText,
-          generated_question: generatedQuestionText,
-          original_question_text: question?.question_text,
-          options: options,
-          variable_ranges: question?.variable_ranges,
-          option_generation_rules: question?.option_generation_rules,
-          instance_index: parseInt(instanceIndex || '0'),
-          original_question_id: baseQuestionId,
-          no_of_times: question?.no_of_times || 1
-        };
+        const selectedOption = options.find(opt => opt.option_text === userAnswer)
+        const correctOption = options.find(opt => opt.is_correct)
         
         return {
-          user_exam_attempt_id: savedAttempt.id,
-          question_id: baseQuestionId,
-          user_response: userResponse,
-          correct_answer: correctOption?.option_text || null,
-          is_correct: selectedOption?.is_correct || false,
-          metadata: metadata
-        };
-      });
+          status: selectedOption?.is_correct ? 'correct' : 'wrong',
+          questionId: extractBaseUuid(questionId),
+          userAnswer: userAnswer,
+          isCorrect: selectedOption?.is_correct || false,
+          correctAnswer: correctOption?.option_text || null
+        }
+      })
 
-      const { error: responsesError } = await supabase
-        .from('user_exam_responses')
-        .insert(questionResponses)
+      // Count results
+      const correctAnswers = processedQuestions.filter(q => q.status === 'correct').length
+      const wrongAnswers = processedQuestions.filter(q => q.status === 'wrong').length
+      const skippedQuestions = processedQuestions.filter(q => q.status === 'skipped').length
 
-      if (responsesError) {
-        console.error('Responses Error:', responsesError)
-        throw new Error('Failed to save question responses')
+      // Calculate score (percentage of correct answers)
+      const score = Math.round((correctAnswers / totalQuestions) * 100)
+
+      // Prepare detailed question responses
+      const questionResponses = processedQuestions.map((question) => ({
+        user_exam_attempt_id: savedAttempt.id,
+        question_id: question.questionId,
+        user_response: question.userAnswer,
+        is_correct: question.status === 'correct',
+        correct_answer: question.correctAnswer,
+        metadata: JSON.stringify({
+          status: question.status,
+          original_question_id: question.questionId
+        })
+      }))
+
+      // Insert question responses
+      if (questionResponses.length > 0) {
+        const { error: responsesError } = await supabase
+          .from('user_question_responses')
+          .insert(questionResponses)
+
+        if (responsesError) {
+          console.error('Responses Error:', JSON.stringify(responsesError))
+        }
+      }
+
+      // Update user exam attempt with results
+      const { error: updateError } = await supabase
+        .from('user_exam_attempts')
+        .update({
+          score: score,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers,
+          wrong_answers: wrongAnswers,
+          skipped_questions: skippedQuestions,
+          time_taken: elapsedSeconds // time taken in seconds
+        })
+        .eq('id', savedAttempt.id)
+
+      if (updateError) {
+        console.error('Update Error:', JSON.stringify(updateError))
+        throw new Error('Failed to save exam results')
       }
 
       setSubmissionSuccess(true)
@@ -711,7 +682,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         router.push('/user/dashboard')
       }, 3000)
     } catch (error: any) {
-      console.error('Error submitting exam:', error)
+      console.error('Error submitting exam:', error.message || error)
       setSubmissionError(error.message || 'Failed to submit exam')
     } finally {
       setIsSubmitting(false)

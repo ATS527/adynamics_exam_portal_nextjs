@@ -50,6 +50,7 @@ interface Option {
   option_text: string
   is_correct: boolean
   question_id: string
+  option_number: number
 }
 
 interface QuestionBank {
@@ -68,7 +69,15 @@ export function QuestionBankViewClient({ id }: { id: string }) {
   const [newQuestionType, setNewQuestionType] = useState('static')
   const [template, setTemplate] = useState('')
   const [variableRanges, setVariableRanges] = useState('')
+  const [optionGenerationRules, setOptionGenerationRules] = useState('')
   const [correctAnswerEquation, setCorrectAnswerEquation] = useState('')
+  const [staticOptions, setStaticOptions] = useState([
+    { option_text: '', is_correct: false },
+    { option_text: '', is_correct: false },
+    { option_text: '', is_correct: false },
+    { option_text: '', is_correct: false }
+  ])
+  const [noOfTimes, setNoOfTimes] = useState(1)
   const router = useRouter()
 
   useEffect(() => {
@@ -103,47 +112,198 @@ export function QuestionBankViewClient({ id }: { id: string }) {
   }, [id])
 
   const handleCreateQuestion = async () => {
-    if (newQuestionType === 'static' && !newQuestionText.trim()) return
-    if (newQuestionType === 'dynamic' && (!template.trim() || !variableRanges.trim() || !correctAnswerEquation.trim())) return
+    setError(null);
 
-    try {
-      let variableRangesObj = {}
-      if (newQuestionType === 'dynamic') {
-        try {
-          variableRangesObj = JSON.parse(variableRanges)
-        } catch (e) {
-          alert('Invalid variable ranges format. Please use valid JSON.')
-          return
-        }
+    if (newQuestionType === 'static') {
+      if (!newQuestionText.trim()) {
+        setError('Please enter a question text for static questions');
+        return;
       }
 
-      const { data, error } = await supabase
-        .from('questions')
-        .insert({
-          question_text: newQuestionType === 'static' ? newQuestionText : '',
-          question_type: newQuestionType,
-          question_bank_id: id,
-          ...(newQuestionType === 'dynamic' && {
+      const validOptions = staticOptions.filter(opt => opt.option_text.trim() !== '')
+      if (validOptions.length < 2) {
+        setError('Please provide at least 2 options');
+        return;
+      }
+
+      const correctOptions = validOptions.filter(opt => opt.is_correct)
+      if (correctOptions.length !== 1) {
+        setError('Please mark exactly one option as correct');
+        return;
+      }
+    }
+
+    if (newQuestionType !== 'static') {
+      if (!template.trim()) {
+        setError(`Please provide a template for ${newQuestionType} questions`);
+        return;
+      }
+
+      try {
+        const parsedVariableRanges = JSON.parse(variableRanges);
+        
+        switch (newQuestionType) {
+          case 'dynamic':
+            Object.values(parsedVariableRanges).forEach(range => {
+              if (typeof range.min !== 'number' || typeof range.max !== 'number') {
+                throw new Error('Variable ranges must have numeric min and max values');
+              }
+            });
+            break;
+
+          case 'dynamic conditional':
+            if (!parsedVariableRanges.range_values || !parsedVariableRanges.enum_values) {
+              throw new Error('Dynamic conditional questions require both range and enum values');
+            }
+            break;
+
+          case 'dynamic text conditional':
+            if (!parsedVariableRanges.enum_values) {
+              throw new Error('Dynamic text conditional questions require enum values');
+            }
+            break;
+        }
+      } catch (e) {
+        setError(`Invalid variable ranges: ${e.message}`);
+        return;
+      }
+
+      try {
+        const parsedOptionRules = JSON.parse(optionGenerationRules);
+        
+        switch (newQuestionType) {
+          case 'dynamic':
+            if (!parsedOptionRules.correct || !parsedOptionRules.wrong1) {
+              throw new Error('Dynamic questions must have "correct" and at least one "wrong" option');
+            }
+            Object.values(parsedOptionRules).forEach(option => {
+              if (!Array.isArray(option) || option.length !== 2 || 
+                  typeof option[0] !== 'string' || typeof option[1] !== 'string') {
+                throw new Error('Each option must be an array with [equation, units]');
+              }
+            });
+            break;
+
+          case 'dynamic conditional':
+            Object.values(parsedOptionRules).forEach(conditionOptions => {
+              if (!Array.isArray(conditionOptions)) {
+                throw new Error('Dynamic conditional options must be an array of condition-specific option sets');
+              }
+              
+              conditionOptions.forEach(optionSet => {
+                if (!optionSet.correct || !optionSet.wrong1) {
+                  throw new Error('Each condition must have "correct" and at least one "wrong" option');
+                }
+                
+                Object.values(optionSet).forEach(option => {
+                  if (!Array.isArray(option) || option.length !== 2 || 
+                      typeof option[0] !== 'string' || typeof option[1] !== 'string') {
+                    throw new Error('Each option must be an array with [equation, units]');
+                  }
+                });
+              });
+            });
+            break;
+
+          case 'dynamic text conditional':
+            Object.values(parsedOptionRules).forEach(optionSet => {
+              if (!optionSet.correct || !optionSet.wrong1) {
+                throw new Error('Each condition must have "correct" and at least one "wrong" option');
+              }
+              
+              Object.values(optionSet).forEach(option => {
+                if (typeof option !== 'string') {
+                  throw new Error('Options must be strings for text conditional questions');
+                }
+              });
+            });
+            break;
+        }
+      } catch (e) {
+        setError(`Invalid option generation rules: ${e.message}`);
+        return;
+      }
+    }
+
+    try {
+      if (newQuestionType === 'static') {
+        // Insert question first
+        const { data: insertedQuestion, error: questionError } = await supabase
+          .from('questions')
+          .insert({
+            question_bank_id: id,
+            question_text: newQuestionText,
+            question_type: 'static'
+          })
+          .select()
+          .single()
+
+        if (questionError) throw questionError
+
+        // Insert options
+        const optionsToInsert = staticOptions
+          .filter(opt => opt.option_text.trim() !== '')
+          .map((opt, index) => ({
+            question_id: insertedQuestion.id,
+            option_text: opt.option_text,
+            is_correct: opt.is_correct,
+            option_number: index + 1
+          }))
+
+        const { error: optionsError } = await supabase
+          .from('options')
+          .insert(optionsToInsert)
+
+        if (optionsError) throw optionsError
+
+        // Update questions state
+        setQuestions([insertedQuestion, ...questions])
+      } else {
+        // Dynamic question creation
+        const variableRangesObj = JSON.parse(variableRanges)
+        const optionRulesObj = JSON.parse(optionGenerationRules)
+
+        const { data, error } = await supabase
+          .from('questions')
+          .insert({
+            question_bank_id: id,
+            question_type: newQuestionType,
             template,
             variable_ranges: variableRangesObj,
-            correct_answer_equation: correctAnswerEquation
+            option_generation_rules: optionRulesObj,
+            // Explicitly set question_text to template for non-static questions
+            question_text: template || 'Dynamic Question',
+            // Add number of times
+            no_of_times: noOfTimes
           })
-        })
-        .select()
-        .single()
+          .select()
+          .single()
 
-      if (error) throw error
+        if (error) throw error
 
-      setQuestions([data, ...questions])
+        setQuestions([data, ...questions])
+      }
+
+      // Reset form
       setNewQuestionText('')
       setTemplate('')
       setVariableRanges('')
-      setCorrectAnswerEquation('')
+      setOptionGenerationRules('')
+      setNoOfTimes(1)  // Reset to default
       setIsCreateDialogOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating question:', error)
-      alert('Failed to create question')
+      setError(error.message)
     }
+  }
+
+  const updateStaticOption = (index: number, field: 'option_text' | 'is_correct', value: string | boolean) => {
+    const newOptions = [...staticOptions]
+    newOptions[index] = {
+      ...newOptions[index],
+      [field]: value
+    }
+    setStaticOptions(newOptions)
   }
 
   const handleEditQuestion = (questionId: string) => {
@@ -167,6 +327,90 @@ export function QuestionBankViewClient({ id }: { id: string }) {
     } catch (error: any) {
       console.error('Error deleting question bank:', error);
       setError(`Failed to delete question bank: ${error.message}`);
+    }
+  };
+
+  const getTemplateExample = (questionType: string) => {
+    switch (questionType) {
+      case 'dynamic':
+        return 'What is {x} + {y}?';
+      case 'dynamic conditional':
+        return 'If {x} is greater than {y}, what is {x} - {y}?';
+      case 'dynamic text conditional':
+        return 'If {x} is greater than {y}, what is the {adjective} {noun}?';
+      default:
+        return '';
+    }
+  };
+
+  const getVariableRangesExample = (questionType: string) => {
+    switch (questionType) {
+      case 'dynamic':
+        return '{"x": {"min": 1, "max": 10}, "y": {"min": 1, "max": 10}}';
+      case 'dynamic conditional':
+        return '{"x": {"min": 1, "max": 10}, "y": {"min": 1, "max": 10}}';
+      case 'dynamic text conditional':
+        return '{"x": {"min": 1, "max": 10}, "y": {"min": 1, "max": 10}, "adjective": {"min": 1, "max": 10}, "noun": {"min": 1, "max": 10}}';
+      default:
+        return '';
+    }
+  };
+
+  const getOptionRulesExample = (type: string) => {
+    switch (type) {
+      case 'static':
+        return 'N/A'
+      case 'dynamic':
+        return JSON.stringify({
+          "wrong1": ["{x} - {y}", "units"],
+          "wrong2": ["{x} * {y}", "units"],
+          "wrong3": ["{x} + {y} + 1", "units"],
+          "correct": ["{x}+{y}", "units"]
+        }, null, 2)
+      case 'dynamic conditional':
+        return JSON.stringify({
+          "direction === E": [{
+            "wrong1": ["{x} + {y} + 1", "units"],
+            "wrong2": ["{x} / {y}", "units"],
+            "wrong3": ["{x}-{y}", "units"],
+            "correct": ["x+y", "units"]
+          }],
+          "direction === W": [{
+            "wrong1": ["{x} - {y} - 1", "units"],
+            "wrong2": ["{x} * {y}", "units"],
+            "wrong3": ["{x}+{y}", "units"],
+            "correct": ["x-y", "units"]
+          }]
+        }, null, 2)
+      case 'dynamic text conditional':
+        return JSON.stringify({
+          "hemisphere === Northern && direction === East": {
+            "wrong1": "Wrong Option 1",
+            "wrong2": "Wrong Option 2", 
+            "wrong3": "Wrong Option 3",
+            "correct": "No error"
+          },
+          "hemisphere === Southern && direction === East": {
+            "wrong1": "Wrong Option 1",
+            "wrong2": "Wrong Option 2",
+            "wrong3": "Wrong Option 3", 
+            "correct": "No error whatsover"
+          },
+          "hemisphere === Northern && direction === North East": {
+            "wrong1": "Wrong Option 1",
+            "wrong2": "Wrong Option 2",
+            "wrong3": "Wrong Option 3",
+            "correct": "Apparent Turn to North Pole, Compass Turns Clockwise, Liquid Swirl increases error"
+          },
+          "hemisphere === Southern && direction === North East": {
+            "wrong1": "Wrong Option 1", 
+            "wrong2": "Wrong Option 2",
+            "wrong3": "Wrong Option 3",
+            "correct": "Apparent Turn to South Pole, Compass Turns Anti Clockwise, Liquid Swirl increases error"
+          }
+        }, null, 2)
+      default:
+        return ''
     }
   };
 
@@ -227,73 +471,159 @@ export function QuestionBankViewClient({ id }: { id: string }) {
                 <Plus className="mr-2 h-4 w-4" /> Add Question
               </Button>
             </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
+            <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+              <DialogHeader className="sticky top-0 bg-white z-10 pb-2">
                 <DialogTitle>Add Question</DialogTitle>
                 <DialogDescription>
                   Add a new question to this question bank.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                {newQuestionType === 'static' ? (
+              <div className="overflow-y-auto flex-grow pr-4">
+                <div className="space-y-4">
+                  {newQuestionType === 'static' ? (
+                    <>
+                      <div>
+                        <Label htmlFor="questionText">Question Text</Label>
+                        <Textarea
+                          id="questionText"
+                          value={newQuestionText}
+                          onChange={(e) => setNewQuestionText(e.target.value)}
+                          placeholder="Enter question text"
+                          className="mb-4"
+                        />
+                      </div>
+                      <div className="space-y-4">
+                        <Label>Options</Label>
+                        {staticOptions.map((option, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <Textarea
+                              value={option.option_text}
+                              onChange={(e) => updateStaticOption(index, 'option_text', e.target.value)}
+                              placeholder={`Option ${index + 1}`}
+                              className="flex-grow"
+                            />
+                            <div className="flex items-center">
+                              <Label htmlFor={`correct-${index}`} className="mr-2">Correct</Label>
+                              <input
+                                id={`correct-${index}`}
+                                type="checkbox"
+                                checked={option.is_correct}
+                                onChange={(e) => {
+                                  // Uncheck all other options when one is checked
+                                  const newOptions = staticOptions.map((opt, i) => ({
+                                    ...opt,
+                                    is_correct: i === index ? e.target.checked : false
+                                  }))
+                                  setStaticOptions(newOptions)
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <Label htmlFor="template">Question Template</Label>
+                        <Textarea
+                          id="template"
+                          value={template}
+                          onChange={(e) => setTemplate(e.target.value)}
+                          placeholder={getTemplateExample(newQuestionType)}
+                          className="min-h-[100px]"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Example template for {newQuestionType}: {getTemplateExample(newQuestionType)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="variableRanges">Variable Ranges (JSON)</Label>
+                        <Textarea
+                          id="variableRanges"
+                          value={variableRanges}
+                          onChange={(e) => setVariableRanges(e.target.value)}
+                          placeholder={getVariableRangesExample(newQuestionType)}
+                          className="min-h-[100px]"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Example variable ranges for {newQuestionType}
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="optionGenerationRules">Option Generation Rules (JSON)</Label>
+                        <Textarea
+                          id="optionGenerationRules"
+                          value={optionGenerationRules}
+                          onChange={(e) => setOptionGenerationRules(e.target.value)}
+                          placeholder={getOptionRulesExample(newQuestionType)}
+                          className="min-h-[150px]"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Specify options with their equations, units, and correctness
+                        </p>
+                      </div>
+                      <div>
+                        <Label htmlFor="noOfTimes">Number of Questions to Generate</Label>
+                        <Input
+                          id="noOfTimes"
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={noOfTimes}
+                          onChange={(e) => setNoOfTimes(Number(e.target.value))}
+                          placeholder="Enter number of questions to generate"
+                          className="w-full"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          How many variations of this question should be generated?
+                        </p>
+                      </div>
+                    </>
+                  )}
                   <div>
-                    <Label htmlFor="questionText">Question Text</Label>
-                    <Textarea
-                      id="questionText"
-                      value={newQuestionText}
-                      onChange={(e) => setNewQuestionText(e.target.value)}
-                      placeholder="Enter question text"
-                    />
+                    <Label htmlFor="questionType">Question Type</Label>
+                    <select
+                      id="questionType"
+                      value={newQuestionType}
+                      onChange={(e) => {
+                        setNewQuestionType(e.target.value as 'static' | 'dynamic' | 'dynamic conditional' | 'dynamic text conditional')
+                        // Reset form fields when type changes
+                        setNewQuestionText('')
+                        setStaticOptions([
+                          { option_text: '', is_correct: false },
+                          { option_text: '', is_correct: false },
+                          { option_text: '', is_correct: false },
+                          { option_text: '', is_correct: false }
+                        ])
+                        setTemplate('')
+                        setVariableRanges('')
+                        setOptionGenerationRules('')
+                      }}
+                      className="w-full border rounded-md p-2"
+                    >
+                      <option value="static">Static</option>
+                      <option value="dynamic">Dynamic</option>
+                      <option value="dynamic conditional">Dynamic Conditional</option>
+                      <option value="dynamic text conditional">Dynamic Text Conditional</option>
+                    </select>
                   </div>
-                ) : (
-                  <>
-                    <div>
-                      <Label htmlFor="template">Question Template</Label>
-                      <Textarea
-                        id="template"
-                        value={template}
-                        onChange={(e) => setTemplate(e.target.value)}
-                        placeholder="Enter template (e.g., 'What is {x} + {y}?')"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="variableRanges">Variable Ranges (JSON)</Label>
-                      <Textarea
-                        id="variableRanges"
-                        value={variableRanges}
-                        onChange={(e) => setVariableRanges(e.target.value)}
-                        placeholder='{"x": {"min": 1, "max": 10}, "y": {"min": 1, "max": 10}}'
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="correctAnswerEquation">Correct Answer Equation</Label>
-                      <Input
-                        id="correctAnswerEquation"
-                        value={correctAnswerEquation}
-                        onChange={(e) => setCorrectAnswerEquation(e.target.value)}
-                        placeholder="x + y"
-                      />
-                    </div>
-                  </>
-                )}
-                <div>
-                  <Label htmlFor="questionType">Question Type</Label>
-                  <select
-                    id="questionType"
-                    value={newQuestionType}
-                    onChange={(e) => setNewQuestionType(e.target.value)}
-                    className="w-full border rounded-md p-2"
-                  >
-                    <option value="static">Static</option>
-                    <option value="dynamic">Dynamic</option>
-                  </select>
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              <DialogFooter className="flex justify-end items-center space-x-2 border-t pt-3 mt-4 bg-gray-50 px-6 py-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  className="mr-2"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleCreateQuestion}>Create</Button>
+                <Button 
+                  onClick={handleCreateQuestion}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Create
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
