@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { title } from "process";
 import { useEffect, useState } from "react";
 
 const LandinNav = () => {
@@ -22,6 +23,21 @@ const LandinNav = () => {
     }
   };
 
+  const navLinks = [
+    {
+        title: "Home",
+        href: "#home"
+    },
+    {
+        title: "Contact",
+        href: "#contact"
+    },
+    {
+        title: "About Us",
+        href: "#about"
+    }
+  ];
+
   useEffect(() => {
     window.addEventListener("scroll", handleScroll);
     return () => {
@@ -31,7 +47,11 @@ const LandinNav = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 w-full ${ isScrolled ? "bg-white shadow-md" : "bg-transparent md:shadow-md" } flex items-center justify-center z-50`}>
+      <nav
+        className={`fixed top-0 w-full ${
+          isScrolled ? "bg-white shadow-md" : "bg-transparent"
+        } flex items-center justify-center z-50 transition-all duration-300 ease-in-out`}
+      >
         <div className="w-full px-4 py-4 sm:py-0 flex items-center justify-between xl:max-w-7xl">
           <div>
             <Link href={"/"}>
@@ -44,15 +64,32 @@ const LandinNav = () => {
                 />
               </div>
               <div className="relative w-40 h-20 hidden sm:block">
-                <Image
-                  src={"/images/horizontal_logo.png"}
-                  alt="adynamics logo"
-                  fill
-                  className="object-contain w-full"
-                />
+                {isScrolled ? (
+                  <Image
+                    src={"/images/horizontal_logo.png"}
+                    alt="adynamics logo"
+                    fill
+                    className="object-contain w-full"
+                  />
+                ) : (
+                  <Image
+                    src={"/images/horizontal_logo_white.png"}
+                    alt="adynamics logo"
+                    fill
+                    className="object-contain w-full"
+                  />
+                )}
               </div>
             </Link>
           </div>
+
+          <ul className="hidden md:flex gap-5">
+                {navLinks.map((link, index) => (
+                  <li key={index}>
+                      <a href={link.href} className={`text-base font-normal hover:text-main ${ isScrolled ? "text-black" : "text-white" }`}>{link.title}</a>
+                  </li>
+                ))}
+          </ul>
 
           <div className="hidden md:flex gap-2">
             <Link href={"/login"}>
@@ -66,9 +103,17 @@ const LandinNav = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 md:hidden">
-          <Button variant="ghost" onClick={toggleSidebar}>
-            <Menu className={`w-5 h-5  ${isScrolled ? "text-black" : "text-white"}`} />
+        <div className="flex items-center gap-4 md:hidden pr-2">
+          <Button
+            variant="ghost"
+            onClick={toggleSidebar}
+            className={isScrolled ? "" : "hover:bg-transparent"}
+          >
+            <Menu
+              className={`w-5 h-5  ${
+                isScrolled ? "text-black" : "sm:text-black text-white"
+              }`}
+            />
           </Button>
         </div>
       </nav>
