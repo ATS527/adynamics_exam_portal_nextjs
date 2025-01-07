@@ -9,9 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChartLine, Clock, Infinity as Unlimited, Trophy } from "lucide-react";
+import {
+  ChartLine,
+  Clock,
+  Infinity as Unlimited,
+  Trophy,
+  CheckCircle,
+} from "lucide-react";
 import whyChooseUs from "@/constants/whyChooseUsData";
 import Image from "next/image";
+import subjectData from "@/constants/subjectData";
+
+
 
 const Home = () => {
   const iconMap = {
@@ -82,7 +91,7 @@ const Home = () => {
         </div>
       </header>
 
-      <main className="w-full flex flex-col items-center justify-center">
+      <main className="w-full flex flex-col items-center justify-center mt-7">
         <section className="w-full lg:max-w-7xl">
           <div className="flex items-start justify-start w-full flex-col px-4 mt-12 md:mt-20">
             <h1 className="font-bold text-black text-3xl md:text-4xl">
@@ -115,61 +124,132 @@ const Home = () => {
           </div>
         </section>
 
-        <section className="w-full lg:max-w-7xl mt-20 lg:mt-28">
-            <div className="flex flex-col lg:flex-row items-center justify-center px-4 lg:gap-10">
-              <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
-                <Image
-                  src={"/images/svgs/unlimited-try.svg"}
-                  alt="unlimited try"
-                  fill
-                  className="w-full h-full"
-                />
-              </div>
-
-              <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-start mt-3">
-                <h1 className="text-center lg:text-start font-bold text-2xl lg:text-5xl leading-tight">Customize Your <br/> Perfect Schedule</h1>
-                <p className="text-center lg:text-start font-normal text-sm lg:text-base text-gray-600 w-5/6 pt-2 sm:w-4/6">
-                  Enroll in unlimited mock tests and sharpen your skills.
-                  Take tests anytime, track progress, and improve with ease.
-                </p>
-              </div>
+        <section className="w-full lg:max-w-7xl mt-28">
+          <div className="flex flex-col lg:flex-row items-center justify-center px-4 lg:gap-10">
+            <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
+              <Image
+                src={"/images/svgs/unlimited-try.svg"}
+                alt="unlimited try"
+                fill
+                className="w-full h-full"
+              />
             </div>
 
-            <div className="lg:mt-16 flex flex-col lg:flex-row-reverse items-center justify-center px-4 lg:gap-10">
-              <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
-                <Image
-                  src={"/images/svgs/learn-anywhere.svg"}
-                  alt="unlimited try"
-                  fill
-                  className="w-full h-full"
-                />
-              </div>
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-start mt-3">
+              <h1 className="text-center lg:text-start font-bold text-2xl lg:text-5xl leading-tight">
+                Customize Your <br /> Perfect Schedule
+              </h1>
+              <p className="text-center lg:text-start font-normal text-sm lg:text-base text-gray-500 w-5/6 pt-2 sm:w-4/6">
+                Enroll in unlimited mock tests and sharpen your skills. Take
+                tests anytime, track progress, and improve with ease.
+              </p>
+            </div>
+          </div>
 
-              <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-end mt-3">
-                <h1 className="text-center lg:text-end font-bold text-2xl lg:text-5xl leading-tight">Learn Anytime<br/> Anywhere</h1>
-                <p className="text-center lg:text-end font-normal text-sm lg:text-base text-gray-600 w-5/6 pt-2 sm:w-4/6">
-                  Take practice tests seamlessly on your mobile, PC, or tablet—anytime, anywhere.
-                </p>
-              </div>
+          <div className="lg:mt-16 flex flex-col lg:flex-row-reverse items-center justify-center px-4 lg:gap-10">
+            <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
+              <Image
+                src={"/images/svgs/learn-anywhere.svg"}
+                alt="unlimited try"
+                fill
+                className="w-full h-full"
+              />
             </div>
 
-            <div className="lg:mt-16 flex flex-col lg:flex-row items-center justify-center px-4 lg:gap-10">
-              <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
-                <Image
-                  src={"/images/svgs/flight-detail.svg"}
-                  alt="unlimited try"
-                  fill
-                  className="w-full h-full"
-                />
-              </div>
-
-              <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-start mt-3">
-                <h1 className="text-center lg:text-start font-bold text-2xl lg:text-5xl leading-tight">Experience the real<br/> DGCA exam patterns.</h1>
-                <p className="text-center lg:text-start font-normal text-sm lg:text-base text-gray-600 w-5/6 pt-2 sm:w-4/6">
-                  Complete mock tests designed to match the exam pattern, helping you track your progress and stay focused.
-                </p>
-              </div>
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-end mt-3">
+              <h1 className="text-center lg:text-end font-bold text-2xl lg:text-5xl leading-tight">
+                Learn Anytime
+                <br /> Anywhere
+              </h1>
+              <p className="text-center lg:text-end font-normal text-sm lg:text-base text-gray-500 w-5/6 pt-2 sm:w-4/6">
+                Take practice tests seamlessly on your mobile, PC, or
+                tablet—anytime, anywhere.
+              </p>
             </div>
+          </div>
+
+          <div className="lg:mt-16 flex flex-col lg:flex-row items-center justify-center px-4 lg:gap-10">
+            <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
+              <Image
+                src={"/images/svgs/flight-detail.svg"}
+                alt="unlimited try"
+                fill
+                className="w-full h-full"
+              />
+            </div>
+
+            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-start mt-3">
+              <h1 className="text-center lg:text-start font-bold text-2xl lg:text-5xl leading-tight">
+                Experience the real
+                <br /> DGCA exam patterns.
+              </h1>
+              <p className="text-center lg:text-start font-normal text-sm lg:text-base text-gray-500 w-5/6 pt-2 sm:w-4/6">
+                Complete mock tests designed to match the exam pattern, helping
+                you track your progress and stay focused.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="w-full lg:max-w-7xl mt-28">
+          <div className="w-full flex flex-col items-start justify-start px-4">
+            <h1 className="font-bold text-black text-3xl md:text-4xl">
+              Choose <br /> Your Subject
+            </h1>
+            <p className="text-sm md:text-base mt-3 md:mt-4">
+              Whether you're just starting out with your CPL exams or advancing
+              your career with ATPL preparation, we’re here to support you at
+              every stage of your journey.
+            </p>
+            <div className="w-full pt-10 flex flex-col gap-6">
+
+              {
+                subjectData.map((subject,index)=>(
+                    <Card key={index} className="w-full lg:w-3/12">
+                      <div className="relative">
+                        <div className="h-48 w-full">
+                          <img
+                            src={subject.cover}
+                            alt="Course Cover"
+                            className="w-full h-full object-cover rounded-t-lg"
+                            loading="lazy"
+                          />
+                        </div>
+
+                        <CardHeader>
+                          <CardTitle>{subject.title}</CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="space-y-4">
+                          {/* <CardDescription>
+                            Air Meteorology deals with weather patterns and atmospheric conditions affecting aviation. It ensures pilots can safely navigate winds, turbulence, and visibility challenges.
+                          </CardDescription> */}
+
+                          <ul className="space-y-2">
+                            {
+                              subject.topics.map((topic,i) => (
+                                <li key={i} className="flex items-center space-x-2">
+                                  <CheckCircle className="w-4 h-4 text-green-500" />
+                                    <span className="text-sm">{topic}</span>
+                                </li>
+                              ))
+                            }
+                          </ul>
+
+                          <div className="flex items-center justify-between pt-4 border-t">
+                            <p className="text-2xl font-bold">{subject.price.after} <s className="text-base text-gray-400 ml-1">{subject.price.before}</s></p>
+                            <Link href={subject.subjectLink}>
+                              <Button>Enroll Now</Button>
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </div>
+                  </Card>
+                ))
+              }
+
+            </div>
+          </div>
         </section>
       </main>
     </>
