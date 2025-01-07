@@ -15,11 +15,12 @@ import {
   Infinity as Unlimited,
   Trophy,
   CheckCircle,
+  Star,
 } from "lucide-react";
 import whyChooseUs from "@/constants/whyChooseUsData";
 import Image from "next/image";
 import subjectData from "@/constants/subjectData";
-
+import TestimonialCarousel from "@/components/TestimonialCarousel";
 
 
 const Home = () => {
@@ -201,53 +202,95 @@ const Home = () => {
               your career with ATPL preparation, we’re here to support you at
               every stage of your journey.
             </p>
-            <div className="w-full pt-10 flex flex-col gap-6">
+            <div className="w-full pt-10 flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {subjectData.map((subject, index) => (
+                <Card key={index} className="w-full flex flex-col">
+                  <div className="h-48 w-full">
+                    <img
+                      src={subject.cover}
+                      alt="Course Cover"
+                      className="w-full h-full object-cover rounded-t-lg"
+                      loading="lazy"
+                    />
+                  </div>
 
-              {
-                subjectData.map((subject,index)=>(
-                    <Card key={index} className="w-full lg:w-3/12">
-                      <div className="relative">
-                        <div className="h-48 w-full">
-                          <img
-                            src={subject.cover}
-                            alt="Course Cover"
-                            className="w-full h-full object-cover rounded-t-lg"
-                            loading="lazy"
-                          />
-                        </div>
+                  <CardHeader>
+                    <CardTitle>{subject.title}</CardTitle>
+                  </CardHeader>
 
-                        <CardHeader>
-                          <CardTitle>{subject.title}</CardTitle>
-                        </CardHeader>
-
-                        <CardContent className="space-y-4">
-                          {/* <CardDescription>
+                  <CardContent className=" flex-1 flex flex-col">
+                    {/* <CardDescription>
                             Air Meteorology deals with weather patterns and atmospheric conditions affecting aviation. It ensures pilots can safely navigate winds, turbulence, and visibility challenges.
                           </CardDescription> */}
 
-                          <ul className="space-y-2">
-                            {
-                              subject.topics.map((topic,i) => (
-                                <li key={i} className="flex items-center space-x-2">
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span className="text-sm">{topic}</span>
-                                </li>
-                              ))
-                            }
-                          </ul>
+                    <ul className="space-y-2 mb-4">
+                      {subject.topics.map((topic, i) => (
+                        <li key={i} className="flex items-center space-x-2">
+                          <CheckCircle className="w-4 h-4 text-main" />
+                          <span className="text-sm text-gray-500">{topic}</span>
+                        </li>
+                      ))}
+                    </ul>
 
-                          <div className="flex items-center justify-between pt-4 border-t">
-                            <p className="text-2xl font-bold">{subject.price.after} <s className="text-base text-gray-400 ml-1">{subject.price.before}</s></p>
-                            <Link href={subject.subjectLink}>
-                              <Button>Enroll Now</Button>
-                            </Link>
-                          </div>
-                        </CardContent>
-                      </div>
-                  </Card>
-                ))
-              }
+                    <div className="flex items-center justify-between pt-4 border-t mt-1 sm:mt-auto">
+                      <p className="text-2xl font-bold">
+                        {subject.price.after}{" "}
+                        <s className="text-base text-gray-400 ml-1">
+                          {subject.price.before}
+                        </s>
+                      </p>
+                      <Link href={subject.subjectLink}>
+                        <Button>Enroll Now</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
 
+        <section className="w-full lg:max-w-7xl mt-28">
+          <div className="w-full flex flex-col items-start justify-start px-4">
+            <h1 className="font-bold text-black text-3xl md:text-4xl">
+              Testimonials
+            </h1>
+            <p className="text-sm md:text-base mt-3 md:mt-4">
+              Over 200 students have successfully cleared their CPL and ATPL
+              exams, thanks to the ADynamics test series. Here are a few
+              inspiring success stories.
+            </p>
+
+            <div className="mt-12 w-full flex items-center justify-center">
+
+              {/* <Card className="relative p-6 overflow-hidden">
+                <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-main" />
+                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-main" />
+
+                <CardContent className="space-y-4">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                      />
+                    ))}
+                  </div>
+
+                  <blockquote className="text-lg italic">
+                    "This course transformed my understanding completely. The
+                    concepts were explained clearly and the practical exercises
+                    were invaluable."
+                  </blockquote>
+
+                  <div className="pt-4 border-t">
+                    <p className="font-semibold">Sarah Johnson</p>
+                  </div>
+                </CardContent>
+              </Card> */}
+
+
+              <TestimonialCarousel/>
             </div>
           </div>
         </section>
