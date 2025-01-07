@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { ChartLine, Clock, Infinity as Unlimited, Trophy } from "lucide-react";
 import whyChooseUs from "@/constants/whyChooseUsData";
+import Image from "next/image";
 
 const Home = () => {
   const iconMap = {
@@ -96,7 +97,7 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="px-4 grid grid-cols-2 gap-3 mt-8">
+          <div className="px-4 grid grid-cols-2 md:flex gap-3 mt-8">
             {whyChooseUs.map((item) => {
               const Icon = iconMap[item.icon];
               return (
@@ -111,16 +112,64 @@ const Home = () => {
                 </Card>
               );
             })}
-            {/* <Card className="w-1/2 sm:w-3/12">
-              <CardHeader>
-                <Clock className="mb-2"/>
-                <CardTitle>Real time exam tracking</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>Know how long you have been practicing and see how much time you have left.</CardDescription>
-              </CardContent>
-            </Card> */}
           </div>
+        </section>
+
+        <section className="w-full lg:max-w-7xl mt-20">
+            <div className="flex flex-col items-center justify-center px-4">
+              <div className="relative w-7/12 h-40">
+                <Image
+                  src={"/images/svgs/unlimited-try.svg"}
+                  alt="unlimited try"
+                  fill
+                  className="w-full h-full"
+                />
+              </div>
+
+              <div className="w-full flex flex-col items-center justify-center mt-3">
+                <h1 className="text-center font-bold text-2xl leading-tight">Customize Your <br/> Perfect Schedule</h1>
+                <p className="text-center font-normal text-sm text-gray-600 w-5/6 pt-2">
+                  Enroll in unlimited mock tests and sharpen your skills.
+                  Take tests anytime, track progress, and improve with ease.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center px-4 mt-10">
+              <div className="relative w-7/12 h-40">
+                <Image
+                  src={"/images/svgs/learn-anywhere.svg"}
+                  alt="unlimited try"
+                  fill
+                  className="w-full h-full"
+                />
+              </div>
+
+              <div className="w-full flex flex-col items-center justify-center mt-3">
+                <h1 className="text-center font-bold text-2xl leading-tight">Learn Anytime<br/> Anywhere</h1>
+                <p className="text-center font-normal text-sm text-gray-600 w-5/6 pt-2">
+                  Take practice tests seamlessly on your mobile, PC, or tablet—anytime, anywhere.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center px-4 mt-10">
+              <div className="relative w-7/12 h-40">
+                <Image
+                  src={"/images/svgs/flight-detail.svg"}
+                  alt="unlimited try"
+                  fill
+                  className="w-full h-full"
+                />
+              </div>
+
+              <div className="w-full flex flex-col items-center justify-center mt-3">
+                <h1 className="text-center font-bold text-2xl leading-tight">Experience the real<br/> DGCA exam patterns.</h1>
+                <p className="text-center font-normal text-sm text-gray-600 w-5/6 pt-2">
+                  Complete mock tests designed to match the exam pattern, helping you track your progress and stay focused.
+                </p>
+              </div>
+            </div>
         </section>
       </main>
     </>
