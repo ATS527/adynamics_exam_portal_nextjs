@@ -97,11 +97,11 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="px-4 grid grid-cols-2 md:flex gap-3 mt-8">
+          <div className="px-4 grid grid-cols-2 lg:flex gap-3 mt-8">
             {whyChooseUs.map((item) => {
               const Icon = iconMap[item.icon];
               return (
-                <Card key={item.title} className="w-full sm:w-3/12">
+                <Card key={item.title} className="w-full lg:w-3/12">
                   <CardHeader>
                     <Icon className="mb-2" />
                     <CardTitle>{item.title}</CardTitle>
@@ -115,9 +115,9 @@ const Home = () => {
           </div>
         </section>
 
-        <section className="w-full lg:max-w-7xl mt-20">
-            <div className="flex flex-col items-center justify-center px-4">
-              <div className="relative w-7/12 h-40">
+        <section className="w-full lg:max-w-7xl mt-20 lg:mt-28">
+            <div className="flex flex-col lg:flex-row items-center justify-center px-4 lg:gap-10">
+              <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
                 <Image
                   src={"/images/svgs/unlimited-try.svg"}
                   alt="unlimited try"
@@ -126,17 +126,17 @@ const Home = () => {
                 />
               </div>
 
-              <div className="w-full flex flex-col items-center justify-center mt-3">
-                <h1 className="text-center font-bold text-2xl leading-tight">Customize Your <br/> Perfect Schedule</h1>
-                <p className="text-center font-normal text-sm text-gray-600 w-5/6 pt-2">
+              <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-start mt-3">
+                <h1 className="text-center lg:text-start font-bold text-2xl lg:text-5xl leading-tight">Customize Your <br/> Perfect Schedule</h1>
+                <p className="text-center lg:text-start font-normal text-sm lg:text-base text-gray-600 w-5/6 pt-2 sm:w-4/6">
                   Enroll in unlimited mock tests and sharpen your skills.
                   Take tests anytime, track progress, and improve with ease.
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center px-4 mt-10">
-              <div className="relative w-7/12 h-40">
+            <div className="lg:mt-16 flex flex-col lg:flex-row-reverse items-center justify-center px-4 lg:gap-10">
+              <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
                 <Image
                   src={"/images/svgs/learn-anywhere.svg"}
                   alt="unlimited try"
@@ -145,16 +145,16 @@ const Home = () => {
                 />
               </div>
 
-              <div className="w-full flex flex-col items-center justify-center mt-3">
-                <h1 className="text-center font-bold text-2xl leading-tight">Learn Anytime<br/> Anywhere</h1>
-                <p className="text-center font-normal text-sm text-gray-600 w-5/6 pt-2">
+              <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-end mt-3">
+                <h1 className="text-center lg:text-end font-bold text-2xl lg:text-5xl leading-tight">Learn Anytime<br/> Anywhere</h1>
+                <p className="text-center lg:text-end font-normal text-sm lg:text-base text-gray-600 w-5/6 pt-2 sm:w-4/6">
                   Take practice tests seamlessly on your mobile, PC, or tablet—anytime, anywhere.
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center px-4 mt-10">
-              <div className="relative w-7/12 h-40">
+            <div className="lg:mt-16 flex flex-col lg:flex-row items-center justify-center px-4 lg:gap-10">
+              <div className="relative w-7/12 h-40 lg:h-64 lg:w-1/2">
                 <Image
                   src={"/images/svgs/flight-detail.svg"}
                   alt="unlimited try"
@@ -163,9 +163,9 @@ const Home = () => {
                 />
               </div>
 
-              <div className="w-full flex flex-col items-center justify-center mt-3">
-                <h1 className="text-center font-bold text-2xl leading-tight">Experience the real<br/> DGCA exam patterns.</h1>
-                <p className="text-center font-normal text-sm text-gray-600 w-5/6 pt-2">
+              <div className="w-full lg:w-1/2 flex flex-col items-center justify-center lg:items-start mt-3">
+                <h1 className="text-center lg:text-start font-bold text-2xl lg:text-5xl leading-tight">Experience the real<br/> DGCA exam patterns.</h1>
+                <p className="text-center lg:text-start font-normal text-sm lg:text-base text-gray-600 w-5/6 pt-2 sm:w-4/6">
                   Complete mock tests designed to match the exam pattern, helping you track your progress and stay focused.
                 </p>
               </div>
