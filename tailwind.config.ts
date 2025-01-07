@@ -9,6 +9,9 @@ export default {
   ],
   theme: {
   	extend: {
+		fontFamily: {
+			poppins: ["Poppins", "sans-serif"],
+		  },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -49,7 +52,10 @@ export default {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+			main : "#49aaaa",
+			mainDark : "#2F7D7D",
+			mainSoft : "#6ecaca"
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
