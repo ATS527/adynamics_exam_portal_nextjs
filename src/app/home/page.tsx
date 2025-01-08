@@ -255,41 +255,13 @@ const Home = () => {
             <h1 className="font-bold text-black text-3xl md:text-4xl">
               Testimonials
             </h1>
-            <p className="text-sm md:text-base mt-3 md:mt-4">
+            <p className="text-sm md:text-base mt-3 md:mt-4 lg:w-8/12">
               Over 200 students have successfully cleared their CPL and ATPL
               exams, thanks to the ADynamics test series. Here are a few
               inspiring success stories.
             </p>
 
             <div className="mt-12 w-full flex items-center justify-center">
-
-              {/* <Card className="relative p-6 overflow-hidden">
-                <div className="absolute top-0 left-0 w-16 h-16 border-t-4 border-l-4 border-main" />
-                <div className="absolute bottom-0 right-0 w-16 h-16 border-b-4 border-r-4 border-main" />
-
-                <CardContent className="space-y-4">
-                  <div className="flex gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className="w-5 h-5 fill-yellow-400 text-yellow-400"
-                      />
-                    ))}
-                  </div>
-
-                  <blockquote className="text-lg italic">
-                    "This course transformed my understanding completely. The
-                    concepts were explained clearly and the practical exercises
-                    were invaluable."
-                  </blockquote>
-
-                  <div className="pt-4 border-t">
-                    <p className="font-semibold">Sarah Johnson</p>
-                  </div>
-                </CardContent>
-              </Card> */}
-
-
               <TestimonialCarousel/>
             </div>
           </div>
