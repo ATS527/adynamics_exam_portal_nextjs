@@ -21,6 +21,9 @@ import whyChooseUs from "@/constants/whyChooseUsData";
 import Image from "next/image";
 import subjectData from "@/constants/subjectData";
 import TestimonialCarousel from "@/components/TestimonialCarousel";
+import ContactCard from "@/components/ContactCard";
+import Footer from "@/components/Footer";
+
 
 
 const Home = () => {
@@ -34,7 +37,7 @@ const Home = () => {
   return (
     <>
       <LandinNav />
-      <header className="w-full">
+      <header className="w-full" id="home">
         {/* mobile hero */}
         <div className="w-full h-screen flex items-center justify-center relative sm:hidden">
           <div className="z-10 px-3 flex flex-col items-center justify-center">
@@ -266,7 +269,29 @@ const Home = () => {
             </div>
           </div>
         </section>
+
+        <section className="w-full lg:max-w-7xl mt-20" id="contact">
+          <div className="w-full flex flex-col items-start justify-start px-4">
+            {/* <h1 className="font-bold text-black text-3xl md:text-4xl">
+              Contact Us
+            </h1> */}
+            {/* <p className="text-sm md:text-base mt-3 md:mt-4 lg:w-8/12">
+              Over 200 students have successfully cleared their CPL and ATPL
+              exams, thanks to the ADynamics test series. Here are a few
+              inspiring success stories.
+            </p> */}
+          </div>
+
+          <div className="mt-12 w-full flex items-center justify-center">
+              <ContactCard/>
+          </div>
+        </section>
       </main>
+      <footer className="w-full flex items-center justify-center bg-white border-t mt-28">
+          <div className="w-full lg:max-w-7xl">
+              <Footer/>
+          </div>
+      </footer>
     </>
   );
 };

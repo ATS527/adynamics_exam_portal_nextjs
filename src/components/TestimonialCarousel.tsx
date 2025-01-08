@@ -29,7 +29,7 @@ const TestimonialCarousel = () => {
           slidesPerView={1}
           // centeredSlides={true}
           autoplay={{
-            delay: 2500,
+            delay: 1500,
             disableOnInteraction: true,
           }}
           breakpoints={{
