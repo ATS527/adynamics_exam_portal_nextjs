@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Loader2, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react'
+
 
 interface Question {
   id: string
@@ -763,31 +764,133 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="relative container mx-auto w-full">
+
+      {/* specific question and confirmation badge */}
+      <div className='px-4 mt-3'>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="flex flex-col text-lg font-medium">
+            Question {currentQuestionIndex + 1}
+            {currentQuestion?.question_type !== "static" && (
+              <span className="sm:ml-2 text-sm text-gray-500">
+                (Dynamic Question)
+              </span>
+            )}
+          </h3>
+          <Dialog>
+            <DialogTrigger>
+              <Button className='p-2 sm:hidden' variant={"outline"}>
+                <ChevronDown />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='w-[90%] rounded-lg'>
+              <DialogHeader>
+                <DialogTitle className='text-start'>
+                  Select Question
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="flex flex-wrap gap-2">
+              {exam.exam_questions.map((eq, index) => {
+                const isAnswered = answers[eq.question.id] !== undefined;
+                const isConfirmed = confirmedQuestions.has(eq.question.id);
+                const isCurrent = index === currentQuestionIndex;
+
+                return (
+                  <>
+                    <Button
+                      key={eq.question.id}
+                      variant={
+                        isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
+                      }
+                      className={cn(
+                        "w-10 h-10",
+                        isCurrent && "ring-2 ring-primary",
+                        isConfirmed && "bg-green-500 hover:bg-green-600"
+                      )}
+                      onClick={() => handleQuestionChange(index)}
+                    >
+                      {index + 1}
+                    </Button>
+                  </>
+                )
+              })}
+            </div>
+
+            </DialogContent>
+          </Dialog>
+
+          <Badge
+          className='hidden sm:inline-flex'
+            variant={
+              confirmedQuestions.has(currentQuestion?.id || "")
+                ? "default"
+                : "secondary"
+            }
+          >
+            {confirmedQuestions.has(currentQuestion?.id || "")
+              ? "Confirmed"
+              : "Not Confirmed"}
+          </Badge>
+        </div>
+      </div>
+
+      {/* question numbers */}
+      <div className="hidden sm:flex flex-wrap gap-2">
+        {exam.exam_questions.map((eq, index) => {
+          const isAnswered = answers[eq.question.id] !== undefined;
+          const isConfirmed = confirmedQuestions.has(eq.question.id);
+          const isCurrent = index === currentQuestionIndex;
+
+          return (
+            <Button
+              key={eq.question.id}
+              variant={
+                isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
+              }
+              className={cn(
+                "w-10 h-10",
+                isCurrent && "ring-2 ring-primary",
+                isConfirmed && "bg-green-500 hover:bg-green-600"
+              )}
+              onClick={() => handleQuestionChange(index)}
+            >
+              {index + 1}
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* exam attending card */}
       <Card className="max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <div className="space-y-2">
               <div>
-                Question {currentQuestionIndex + 1} of {exam.exam_questions.length}
+                Question {currentQuestionIndex + 1} of{" "}
+                {exam.exam_questions.length}
               </div>
               <div className="text-sm text-muted-foreground">
-                Exam Duration: {Math.floor((timeLeft ?? 0) / 60)}:{((timeLeft ?? 0) % 60).toString().padStart(2, '0')}
+                Exam Duration: {Math.floor((timeLeft ?? 0) / 60)}:
+                {((timeLeft ?? 0) % 60).toString().padStart(2, "0")}
               </div>
             </div>
             {forceTimeLeft !== null && forceTimeLeft > 0 && (
-              <div className={cn(
-                "text-sm font-medium",
-                forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
-              )}>
-                Question Time: {Math.floor(forceTimeLeft / 60)}:{(forceTimeLeft % 60).toString().padStart(2, '0')}
+              <div
+                className={cn(
+                  "text-sm font-medium",
+                  forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
+                )}
+              >
+                Question Time: {Math.floor(forceTimeLeft / 60)}:
+                {(forceTimeLeft % 60).toString().padStart(2, "0")}
               </div>
             )}
           </CardTitle>
         </CardHeader>
 
         <CardContent>
-          <ScrollArea className="h-[calc(100vh-400px)] rounded-md border p-4">
+          <ScrollArea className="rounded-md border p-4">
             {renderQuestion()}
           </ScrollArea>
         </CardContent>
@@ -802,14 +905,17 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
             </Button>
             <Button
               onClick={() => handleQuestionChange(currentQuestionIndex + 1)}
-              disabled={currentQuestionIndex === exam.exam_questions.length - 1 || isNavigationLocked}
+              disabled={
+                currentQuestionIndex === exam.exam_questions.length - 1 ||
+                isNavigationLocked
+              }
             >
               Next
             </Button>
           </div>
 
           <div className="space-x-2">
-            <Button 
+            <Button
               onClick={() => setShowConfirmDialog(true)}
               variant="destructive"
             >
@@ -818,58 +924,6 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
           </div>
         </CardFooter>
       </Card>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {exam.exam_questions.map((eq, index) => {
-          const isAnswered = answers[eq.question.id] !== undefined;
-          const isConfirmed = confirmedQuestions.has(eq.question.id);
-          const isCurrent = index === currentQuestionIndex;
-          
-          return (
-            <Button
-              key={eq.question.id}
-              variant={
-                isConfirmed
-                  ? 'default'
-                  : isAnswered
-                  ? 'secondary'
-                  : 'outline'
-              }
-              className={cn(
-                'w-10 h-10',
-                isCurrent && 'ring-2 ring-primary',
-                isConfirmed && 'bg-green-500 hover:bg-green-600'
-              )}
-              onClick={() => handleQuestionChange(index)}
-            >
-              {index + 1}
-            </Button>
-          );
-        })}
-      </div>
-
-      <div className="mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">
-            Question {currentQuestionIndex + 1}
-            {currentQuestion?.question_type !== 'static' && (
-              <span className="ml-2 text-sm text-gray-500">
-                (Dynamic Question)
-              </span>
-            )}
-          </h3>
-          <Badge variant={
-            confirmedQuestions.has(currentQuestion?.id || '') 
-              ? "default" 
-              : "secondary"
-          }>
-            {confirmedQuestions.has(currentQuestion?.id || '') 
-              ? "Confirmed" 
-              : "Not Confirmed"
-            }
-          </Badge>
-        </div>
-      </div>
 
       {timeLeft !== null && timeLeft <= 300 && (
         <Alert variant="destructive" className="mt-4">
@@ -886,11 +940,17 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
           <DialogHeader>
             <DialogTitle>Confirm Exam Submission</DialogTitle>
             <DialogDescription>
-              Are you sure you want to submit your exam? This action cannot be undone.
+              Are you sure you want to submit your exam? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmDialog(false)}
+            >
+              Cancel
+            </Button>
             <Button onClick={handleSubmit}>Confirm Submission</Button>
           </DialogFooter>
         </DialogContent>
@@ -908,9 +968,12 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         <Alert variant="default" className="mt-4">
           <CheckCircle className="h-4 w-4" />
           <AlertTitle>Success</AlertTitle>
-          <AlertDescription>Your exam has been submitted successfully. Redirecting to dashboard...</AlertDescription>
+          <AlertDescription>
+            Your exam has been submitted successfully. Redirecting to
+            dashboard...
+          </AlertDescription>
         </Alert>
       )}
     </div>
-  )
+  );
 }

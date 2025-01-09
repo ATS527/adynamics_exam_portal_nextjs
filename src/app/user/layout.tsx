@@ -125,7 +125,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
       </nav>
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto">
         {children}
       </main>
     </div>
