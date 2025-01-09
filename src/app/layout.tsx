@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import "./globals.css";
+import Loading from "./loading";
+
 
 export default function RootLayout({
   children,
@@ -10,7 +13,11 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon-32x32.png" sizes="any" />
       </head>
-      <body>{children}</body>
+      <body>
+        <Suspense fallback={<Loading />}>
+          {children}
+        </Suspense>
+      </body>
     </html>
   );
 }
