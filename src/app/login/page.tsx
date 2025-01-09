@@ -9,9 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, Lock, Mail } from 'lucide-react'
 import Image from 'next/image'
 import randomBgData from '@/constants/randomBgData'
+
 
 
 
@@ -128,7 +129,7 @@ export default function LoginPage() {
             <form onSubmit={handleLogin}>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className='flex items-center justify-start'><Mail className='mr-2 w-4 h-4'/>Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -139,7 +140,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password" className='flex items-center justify-start'><Lock className='mr-2 w-4 h-4'/>Password</Label>
                   <Input
                     id="password"
                     type="password"
@@ -175,7 +176,7 @@ export default function LoginPage() {
 
       <div className='w-full h-[10%] flex items-center justify-center'>
         <div className='w-full lg:max-w-7xl text-center text-sm text-gray-500 sm:text-white'>
-          Having trouble logging in? please contact us at <a className='text-main hover:text-mainDark transition-colors duration-300 ease-in-out' href="mailto:support@adynamics.com">support@adynamics.com</a>
+          Having trouble logging in? please contact us at <a className='text-main hover:text-mainSoft transition-colors duration-300 ease-in-out' href="mailto:support@adynamics.in">support@adynamics.in</a>
         </div>
       </div>
 

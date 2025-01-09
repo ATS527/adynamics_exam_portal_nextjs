@@ -73,4 +73,5 @@
 *{
   font-family: "Poppins", sans-serif;
   scroll-behavior: smooth;
+  scrollbar-width: thin;
 }
