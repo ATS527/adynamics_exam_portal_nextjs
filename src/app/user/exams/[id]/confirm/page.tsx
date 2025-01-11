@@ -4,24 +4,52 @@ import Link from 'next/link'
 import { useParams,useRouter } from 'next/navigation'
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from "@/lib/supabase";
 
 const Guidence = () => {
     const [confirm, setConfirm] = useState(true)
+    const [ examTitle, setExamTitle ] = useState("")
     const params = useParams()
     const router = useRouter()
+
+      useEffect(() => {
+        async function fetchExamDetails() {
+          try {
+            const { data, error } = await supabase
+              .from("exams")
+              .select(
+                `
+                *,
+                exam_questions (count)
+              `
+              )
+              .eq("id", params.id)
+              .single();
+            if (error) throw error;
+
+            setExamTitle(data.title)
+            
+          } catch (error: any) {
+            console.error("Error fetching exam details:", error);
+            
+          }
+        }
+    
+        fetchExamDetails();
+      }, []);
     
   return (
     <>
         <main className='w-full flex flex-col items-center justify-center'>
             <div className='flex flex-col gap-4 w-full px-4 py-4 xl:max-w-5xl'>
-                <h1 className='text-2xl my-3 font-bold'>Exam Subject</h1>
+                <h1 className='text-2xl my-3 font-bold'>{examTitle}</h1>
                 <div>
                     <h3 className="text-xl font-semibold mb-2">
                         General Instructions
                     </h3>
                     <p>
-                        <ul className='list-disc flex flex-col gap-3 ml-2'>
+                        <ul className='list-disc flex flex-col gap-3 ml-5'>
                             <li>
                                 The time remaining to complete the exam is displayed on your screen and at the top-right corner of your screen. When the time runs out, your exam ends.
                             </li>
