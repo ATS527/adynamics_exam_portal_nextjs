@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Loader2, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react'
+import CopyrightFooter from '@/components/CopyrightFooter'
 
 
 interface Question {
@@ -764,9 +765,10 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <div className="relative container mx-auto w-full">
+    <>
+    <div className="relative container mx-auto w-full flex flex-row-reverse sm:justify-center sm:items-start sm:pr-6">
       {/* specific question and confirmation badge */}
-      <div className="px-4 mt-3">
+      {/* <div className="px-4 mt-3">
         <div className="hidden sm:flex justify-between items-center mb-4">
           <h3 className="flex flex-col text-lg font-medium">
             Question {currentQuestionIndex + 1}
@@ -790,36 +792,43 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               : "Not Confirmed"}
           </Badge>
         </div>
-      </div>
+      </div> */}
 
       {/* question numbers */}
-      <div className="hidden sm:flex flex-wrap gap-2">
-        {exam.exam_questions.map((eq, index) => {
-          const isAnswered = answers[eq.question.id] !== undefined;
-          const isConfirmed = confirmedQuestions.has(eq.question.id);
-          const isCurrent = index === currentQuestionIndex;
+      <Card className='hidden sm:block max-w-60 mt-[116px]'>
+        <CardHeader>
+          <CardTitle>Questions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="hidden sm:flex flex-wrap gap-2 sm:items-start sm:justify-start">
+            {exam.exam_questions.map((eq, index) => {
+              const isAnswered = answers[eq.question.id] !== undefined;
+              const isConfirmed = confirmedQuestions.has(eq.question.id);
+              const isCurrent = index === currentQuestionIndex;
 
-          return (
-            <Button
-              key={eq.question.id}
-              variant={
-                isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
-              }
-              className={cn(
-                "w-10 h-10",
-                isCurrent && "ring-2 ring-primary",
-                isConfirmed && "bg-green-500 hover:bg-green-600"
-              )}
-              onClick={() => handleQuestionChange(index)}
-            >
-              {index + 1}
-            </Button>
-          );
-        })}
-      </div>
+              return (
+                <Button
+                  key={eq.question.id}
+                  variant={
+                    isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
+                  }
+                  className={cn(
+                    "w-10 h-10",
+                    isCurrent && "ring-2 ring-primary",
+                    isConfirmed && "bg-main hover:bg-mainDark"
+                  )}
+                  onClick={() => handleQuestionChange(index)}
+                >
+                  {index + 1}
+                </Button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* exam attending card */}
-      <Card className="max-w-4xl mx-auto border-none shadow-none sm:rounded-md sm:border-gray-500">
+      <Card className="max-w-4xl w-full border-none shadow-none sm:rounded-md sm:border-gray-500">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <div className="space-y-2">
@@ -838,6 +847,18 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
             <div className='flex flex-col items-end justify-center gap-1'>
+              <Badge
+                className="hidden sm:inline-flex"
+                variant={
+                  confirmedQuestions.has(currentQuestion?.id || "")
+                    ? "default"
+                    : "secondary"
+                }
+              >
+                {confirmedQuestions.has(currentQuestion?.id || "")
+                  ? "Confirmed"
+                  : "Not Confirmed"}
+              </Badge>
               <Dialog>
                 <DialogTrigger>
                   <Button className="p-2 sm:hidden" variant={"outline"}>
@@ -989,5 +1010,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         </Alert>
       )}
     </div>
+    <CopyrightFooter/>
+    </>
   );
 }
