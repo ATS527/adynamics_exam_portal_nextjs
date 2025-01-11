@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
+import Loading from '@/app/loading'
 
 interface Exam {
   id: string
@@ -40,9 +41,10 @@ export default function UserDashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      // <div className="flex justify-center items-center h-screen">
+      //   <Loader2 className="h-8 w-8 animate-spin" />
+      // </div>
+      <Loading/>
     )
   }
 
