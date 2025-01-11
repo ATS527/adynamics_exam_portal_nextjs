@@ -114,10 +114,10 @@ export default function LoginPage() {
 
         <div className="flex flex-col items-center justify-center sm:gap-3">
           {error && (
-            <Alert variant="destructive" className="mb-4 w-[90%] sm:w-full max-w-md">
-                <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" className="mb-4 w-[90%] sm:w-full max-w-md bg-destructive text-white">
+                <AlertCircle className="h-4 w-4" style={{color:"white"}} />
                 <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
           <Card className="w-full h-full sm:max-w-md border-none shadow-none sm:border sm:shadow-sm">
@@ -152,7 +152,7 @@ export default function LoginPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col space-y-4">
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full transition-all duration-300 ease-in-out" disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -168,6 +168,10 @@ export default function LoginPage() {
                     Register here
                   </Link>
                 </p>
+
+                <Link href={"/forgot-password"} className='text-sm text-gray-400 hover:text-gray-600'>
+                  Forgot Password?
+                </Link>
               </CardFooter>
             </form>
           </Card>

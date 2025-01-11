@@ -98,8 +98,8 @@ export default function RegisterPage() {
         </div>
         <div className="flex flex-col items-center justify-center w-full md:w-auto">
           {error && (
-            <Alert variant="destructive" className="mb-4 max-w-md">
-              <AlertCircle className="h-4 w-4" />
+            <Alert variant="destructive" className="mb-4 max-w-md bg-destructive text-white">
+              <AlertCircle className="h-4 w-4" style={{color:"white"}} />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
