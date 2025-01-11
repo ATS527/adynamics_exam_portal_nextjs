@@ -62,7 +62,7 @@ export default function UserDashboard() {
                 <li key={exam.id} className="flex justify-between items-center">
                   <span>{exam.title}</span>
                   <Button asChild>
-                    <Link href={`/user/exams/${exam.id}/take`}>Take Exam</Link>
+                    <Link href={`/user/exams/${exam.id}`}>Take Exam</Link>
                   </Button>
                 </li>
               ))}

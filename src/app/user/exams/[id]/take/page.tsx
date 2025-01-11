@@ -765,10 +765,9 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="relative container mx-auto w-full">
-
       {/* specific question and confirmation badge */}
-      <div className='px-4 mt-3'>
-        <div className="flex justify-between items-center mb-4">
+      <div className="px-4 mt-3">
+        <div className="hidden sm:flex justify-between items-center mb-4">
           <h3 className="flex flex-col text-lg font-medium">
             Question {currentQuestionIndex + 1}
             {currentQuestion?.question_type !== "static" && (
@@ -777,51 +776,9 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               </span>
             )}
           </h3>
-          <Dialog>
-            <DialogTrigger>
-              <Button className='p-2 sm:hidden' variant={"outline"}>
-                <ChevronDown />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='w-[90%] rounded-lg'>
-              <DialogHeader>
-                <DialogTitle className='text-start'>
-                  Select Question
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="flex flex-wrap gap-2">
-              {exam.exam_questions.map((eq, index) => {
-                const isAnswered = answers[eq.question.id] !== undefined;
-                const isConfirmed = confirmedQuestions.has(eq.question.id);
-                const isCurrent = index === currentQuestionIndex;
-
-                return (
-                  <>
-                    <Button
-                      key={eq.question.id}
-                      variant={
-                        isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
-                      }
-                      className={cn(
-                        "w-10 h-10",
-                        isCurrent && "ring-2 ring-primary",
-                        isConfirmed && "bg-green-500 hover:bg-green-600"
-                      )}
-                      onClick={() => handleQuestionChange(index)}
-                    >
-                      {index + 1}
-                    </Button>
-                  </>
-                )
-              })}
-            </div>
-
-            </DialogContent>
-          </Dialog>
 
           <Badge
-          className='hidden sm:inline-flex'
+            className="hidden sm:inline-flex"
             variant={
               confirmedQuestions.has(currentQuestion?.id || "")
                 ? "default"
@@ -862,30 +819,85 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* exam attending card */}
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-4xl mx-auto border-none shadow-none sm:rounded-md sm:border-gray-500">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <div className="space-y-2">
-              <div>
+              <div className='flex flex-col'>
                 Question {currentQuestionIndex + 1} of{" "}
                 {exam.exam_questions.length}
+                {currentQuestion?.question_type !== "static" && (
+                  <span className="mt-1 sm:text-sm text-xs text-gray-500">
+                    (Dynamic Question)
+                  </span>
+                )}
               </div>
               <div className="text-sm text-muted-foreground">
                 Exam Duration: {Math.floor((timeLeft ?? 0) / 60)}:
                 {((timeLeft ?? 0) % 60).toString().padStart(2, "0")}
               </div>
             </div>
-            {forceTimeLeft !== null && forceTimeLeft > 0 && (
-              <div
-                className={cn(
-                  "text-sm font-medium",
-                  forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
-                )}
-              >
-                Question Time: {Math.floor(forceTimeLeft / 60)}:
-                {(forceTimeLeft % 60).toString().padStart(2, "0")}
-              </div>
-            )}
+            <div className='flex flex-col items-end justify-center gap-1'>
+              <Dialog>
+                <DialogTrigger>
+                  <Button className="p-2 sm:hidden" variant={"outline"}>
+                    <ChevronDown />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90%] rounded-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-start">
+                      Select Question
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <div className="flex flex-wrap gap-2">
+                    {exam.exam_questions.map((eq, index) => {
+                      const isAnswered = answers[eq.question.id] !== undefined;
+                      const isConfirmed = confirmedQuestions.has(
+                        eq.question.id
+                      );
+                      const isCurrent = index === currentQuestionIndex;
+
+                      return (
+                        <>
+                          <Button
+                            key={eq.question.id}
+                            variant={
+                              isConfirmed
+                                ? "default"
+                                : isAnswered
+                                ? "secondary"
+                                : "outline"
+                            }
+                            className={cn(
+                              "w-10 h-10",
+                              isCurrent && "ring-2 ring-primary",
+                              isConfirmed && "bg-main hover:bg-mainDark"
+                            )}
+                            onClick={() => handleQuestionChange(index)}
+                          >
+                            {index + 1}
+                          </Button>
+                        </>
+                      );
+                    })}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {forceTimeLeft !== null && forceTimeLeft > 0 && (
+                <div
+                  className={cn(
+                    "text-sm font-medium",
+                    forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
+                  )}
+                >
+                  Question Time: {Math.floor(forceTimeLeft / 60)}:
+                  {(forceTimeLeft % 60).toString().padStart(2, "0")}
+                </div>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
 
@@ -898,12 +910,14 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         <CardFooter className="flex justify-between">
           <div className="space-x-2">
             <Button
+              className="hover:bg-main"
               onClick={() => handleQuestionChange(currentQuestionIndex - 1)}
               disabled={currentQuestionIndex === 0 || isNavigationLocked}
             >
               Previous
             </Button>
             <Button
+              className="hover:bg-main"
               onClick={() => handleQuestionChange(currentQuestionIndex + 1)}
               disabled={
                 currentQuestionIndex === exam.exam_questions.length - 1 ||

@@ -67,7 +67,7 @@ export function ExamDetailsClient({ examId }: { examId: string }) {
 
   const handleStartExam = () => {
     // Navigate to the actual exam page
-    router.push(`/user/exams/${examId}/take`);
+    router.push(`/user/exams/${examId}/confirm`);
   };
 
   if (isLoading) {
