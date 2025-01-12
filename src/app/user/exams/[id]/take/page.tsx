@@ -992,8 +992,8 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       </Dialog>
 
       {submissionError && (
-        <Alert variant="destructive" className="mt-4">
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant="destructive" className="w-[300px] absolute left-1/2 right-1/2 -translate-x-1/2 mt-4 bg-destructive border-destructive text-white">
+          <AlertCircle className="h-4 w-4" style={{color: 'white'}}/>
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{submissionError}</AlertDescription>
         </Alert>
