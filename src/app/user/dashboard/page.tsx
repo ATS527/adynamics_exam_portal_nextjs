@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
-import Loading from '@/app/loading'
 
 interface Exam {
   id: string
@@ -41,10 +40,9 @@ export default function UserDashboard() {
 
   if (loading) {
     return (
-      // <div className="flex justify-center items-center h-screen">
-      //   <Loader2 className="h-8 w-8 animate-spin" />
-      // </div>
-      <Loading/>
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     )
   }
 
@@ -64,7 +62,7 @@ export default function UserDashboard() {
                 <li key={exam.id} className="flex justify-between items-center">
                   <span>{exam.title}</span>
                   <Button asChild>
-                    <Link href={`/user/exams/${exam.id}`}>Take Exam</Link>
+                    <Link href={`/user/exams/${exam.id}/confirm`}>Take Exam</Link>
                   </Button>
                 </li>
               ))}

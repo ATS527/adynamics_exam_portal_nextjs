@@ -1000,8 +1000,8 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       )}
 
       {submissionSuccess && (
-        <Alert variant="default" className="mt-4">
-          <CheckCircle className="h-4 w-4" />
+        <Alert variant="default" className="w-[300px] absolute left-1/2 right-1/2 -translate-x-1/2 mt-4 bg-green-500 border-green-500 text-white">
+          <CheckCircle className="h-4 w-4" style={{color: 'white'}} />
           <AlertTitle>Success</AlertTitle>
           <AlertDescription>
             Your exam has been submitted successfully. Redirecting to
