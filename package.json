@@ -26,6 +26,7 @@
     "@radix-ui/react-tooltip": "^1.1.6",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.46.1",
+    "@tanstack/react-table": "^8.20.6",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -36,6 +37,7 @@
     "react-dom": "19.0.0-rc-66855b96-20241106",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.5.4",
+    "tailwind-scrollbar-hide": "^2.0.0",
     "tailwindcss-animate": "^1.0.7",
     "xlsx": "^0.18.5"
   },

@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase'
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -27,7 +26,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Loader2, Eye } from 'lucide-react'
+import { Loader2, Eye, SquareCheckBig } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+  VisibilityState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 
 interface ExamResult {
   id: string
@@ -89,6 +108,90 @@ export default function ResultsPage() {
   const [selectedAttempt, setSelectedAttempt] = useState<ExamResult | null>(null)
   const [attemptDetails, setAttemptDetails] = useState<AttemptDetail[]>([])
   const [detailsLoading, setDetailsLoading] = useState(false)
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+
+  const columns: ColumnDef<ExamResult>[] = [
+    {
+      accessorKey: "user_name",
+      header: "User",
+      cell: ({ row }) => <div>{row.getValue("user_name")}</div>,
+    },
+    {
+      accessorKey: "exam.title",
+      header: "Exam",
+    },
+    {
+      accessorKey: "score",
+      header: "Score",
+      cell: ({ row }) => <div>{row.getValue("score")}%</div>,
+    },
+    {
+      accessorKey: "correct_answers",
+      header: "Correct",
+    },
+    {
+      accessorKey: "wrong_answers",
+      header: "Wrong",
+    },
+    {
+      accessorKey: "skipped_questions",
+      header: "Skipped",
+    },
+    {
+      accessorKey: "time_taken",
+      header: "Time Taken",
+      cell: ({ row }) => {
+        const minutes = Math.floor(row.getValue("time_taken") / 60)
+        const seconds = (row.getValue("time_taken") % 60).toString().padStart(2, "0")
+        return <div>{minutes}:{seconds}</div>
+      },
+    },
+    {
+      accessorKey: "end_time",
+      header: "Completed",
+      cell: ({ row }) => <div>{formatDate(row.getValue("end_time"))}</div>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleViewDetails(row.original)}
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">View</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+    },
+  ]
+
+  const table = useReactTable({
+    data: results,
+    columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+    },
+  });
 
   useEffect(() => {
     // Get initial session
@@ -166,8 +269,6 @@ export default function ResultsPage() {
     setDetailsLoading(true)
 
     try {
-      console.log('Fetching details for attempt:', attempt)
-
       // Fetch responses for this attempt
       const { data: responses, error: responsesError } = await supabase
         .from('user_question_responses')
@@ -189,19 +290,13 @@ export default function ResultsPage() {
         `)
         .eq('user_exam_attempt_id', attempt.id)
 
-      console.log('Question responses:', responses)
-      if (responsesError) {
-        console.error('Error fetching responses:', responsesError)
-        throw responsesError
-      }
+      if (responsesError) throw responsesError
 
-      // Transform the data into attempt details
-        const details: AttemptDetail[] = responses?.map((response: any) => {
+      const details: AttemptDetail[] = responses?.map((response: any) => {
         const question = response.questions;
         let questionText = '';
         let dynamicInfo = null;
 
-        // Handle different question types
         switch (question.question_type) {
           case 'static':
             questionText = question.question_text;
@@ -210,23 +305,19 @@ export default function ResultsPage() {
           case 'dynamic':
           case 'dynamic conditional':
           case 'dynamic text conditional':
-            // Try to get the generated question from metadata first
             const metadata = response.metadata || {};
             questionText = metadata.generated_question || question.template || question.question_text;
             
-            // Prepare dynamic info
             const variableRanges = question.variable_ranges || {};
             let variableValues = '';
             
             if (question.question_type === 'dynamic') {
-              // For simple dynamic questions, show numeric ranges
               variableValues = Object.entries(variableRanges)
                 .map(([name, range]: [string, any]) => (
                   `${name}: ${range.min}-${range.max}`
                 ))
                 .join(', ');
             } else if (question.question_type === 'dynamic conditional') {
-              // For conditional questions, show both enum and range values
               const enumValues = variableRanges.enum_values || {};
               const rangeValues = variableRanges.range_values || {};
               
@@ -239,7 +330,6 @@ export default function ResultsPage() {
                 )
               ].join(', ');
             } else {
-              // For text conditional questions, show enum values
               const enumValues = variableRanges.enum_values || {};
               variableValues = Object.entries(enumValues)
                 .map(([name, values]: [string, any]) => 
@@ -262,7 +352,7 @@ export default function ResultsPage() {
           selected_option: response.user_response,
           correct_option: response.correct_answer,
           status: response.is_correct ? 'correct' : 
-                 response.user_response ? 'wrong' : 'skipped',
+            response.user_response ? 'wrong' : 'skipped',
           isDynamic: question.question_type !== 'static',
           dynamicInfo,
           questionType: question.question_type
@@ -300,60 +390,138 @@ export default function ResultsPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Exam Results</CardTitle>
-          <CardDescription>View all exam attempts and results</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>A list of all exam attempts</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Exam</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Correct</TableHead>
-                <TableHead>Wrong</TableHead>
-                <TableHead>Skipped</TableHead>
-                <TableHead>Time Taken</TableHead>
-                <TableHead>Completed</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {results.map((result) => (
-                <TableRow key={result.id}>
-                  <TableCell>{result.user_name}</TableCell>
-                  <TableCell>{result.exam.title}</TableCell>
-                  <TableCell>{result.score?.toFixed(1)}%</TableCell>
-                  <TableCell>{result.correct_answers}</TableCell>
-                  <TableCell>{result.wrong_answers}</TableCell>
-                  <TableCell>{result.skipped_questions}</TableCell>
-                  <TableCell>{Math.floor(result.time_taken / 60)}:{(result.time_taken % 60).toString().padStart(2, '0')}</TableCell>
-                  <TableCell>{formatDate(result.end_time)}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleViewDetails(result)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="text-2xl font-bold flex items-center mt-3 mb-1">
+          <SquareCheckBig className="mr-2" /> Exam Results
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">
+          View all exam attempts and results
+        </p>
+      </div>
 
-      <Dialog open={!!selectedAttempt} onOpenChange={() => setSelectedAttempt(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <div className="flex items-center justify-between gap-4 py-4">
+        <Input
+          placeholder="Filter by user..."
+          value={
+            (table.getColumn("user_name")?.getFilterValue() as string) ?? ""
+          }
+          onChange={(event) =>
+            table.getColumn("user_name")?.setFilterValue(event.target.value)
+          }
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="default">Columns</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
+                  >
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="rounded-xl border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead className="text-center" key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell className="text-center" key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-center justify-between space-x-2 py-4">
+        <div className="flex-1 text-sm text-primary">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+
+      <Dialog
+        open={!!selectedAttempt}
+        onOpenChange={() => setSelectedAttempt(null)}
+      >
+        <DialogContent className="max-h-[90vh] w-11/12 rounded-xl overflow-y-auto overflow-x-hidden sm:max-w-xl md:max-w-2xl lg:max-w-4xl scrollbar-hide">
           <DialogHeader>
-            <DialogTitle>Attempt Details</DialogTitle>
-            <DialogDescription>
-              {selectedAttempt?.user_name}&apos;s attempt of {selectedAttempt?.exam.title}
+            <DialogTitle className="text-start">Attempt Details</DialogTitle>
+            <DialogDescription className="break-words text-start">
+              {selectedAttempt?.user_name}&apos;s attempt of{" "}
+              {selectedAttempt?.exam.title}
             </DialogDescription>
           </DialogHeader>
 
@@ -362,67 +530,82 @@ export default function ResultsPage() {
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 w-full">
               {attemptDetails.map((detail, index) => (
                 <div key={index} className="p-4 rounded-lg border">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
+                  <div className="space-y-2 break-words">
+                    <div className="flex flex-wrap justify-between items-start gap-2">
                       <h3 className="font-medium">Question {index + 1}</h3>
                       <Badge
                         variant={
-                          detail.status === 'correct'
-                            ? 'default'
-                            : detail.status === 'wrong'
-                            ? 'destructive'
-                            : 'secondary'
+                          detail.status === "correct"
+                            ? "default"
+                            : detail.status === "wrong"
+                            ? "destructive"
+                            : "secondary"
                         }
                         className={
-                          detail.status === 'correct'
-                            ? 'bg-green-500'
+                          detail.status === "correct"
+                            ? "bg-green-500"
                             : undefined
                         }
                       >
-                        {detail.status.charAt(0).toUpperCase() + detail.status.slice(1)}
+                        {detail.status.charAt(0).toUpperCase() +
+                          detail.status.slice(1)}
                       </Badge>
                     </div>
-                    <p className="text-gray-800">{detail.question}</p>
+                    <p className="text-gray-800 whitespace-pre-wrap">
+                      {detail.question}
+                    </p>
                     {detail.isDynamic && detail.dynamicInfo && (
                       <div className="mt-2 space-y-1 text-sm bg-gray-50 p-3 rounded-md">
                         <p className="font-medium text-gray-600">
                           Dynamic Question Details ({detail.questionType}):
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 break-words">
                           <span className="font-medium">Template:</span>{" "}
-                          <code className="bg-gray-100 px-1 py-0.5 rounded">
+                          <code className="bg-gray-100 px-1 py-0.5 rounded break-all">
                             {detail.dynamicInfo.template}
                           </code>
                         </p>
                         {detail.dynamicInfo.variableRanges && (
-                          <p className="text-gray-600">
-                            <span className="font-medium">Variable Ranges:</span>{" "}
-                            <code className="bg-gray-100 px-1 py-0.5 rounded">
+                          <p className="text-gray-600 break-words">
+                            <span className="font-medium">
+                              Variable Ranges:
+                            </span>{" "}
+                            <code className="bg-gray-100 px-1 py-0.5 rounded break-all">
                               {detail.dynamicInfo.variableRanges}
                             </code>
                           </p>
                         )}
                         {detail.dynamicInfo.rules && (
                           <p className="text-gray-600">
-                            <span className="font-medium">Generation Rules:</span>{" "}
-                            <pre className="bg-gray-100 px-2 py-1 rounded overflow-x-auto">
+                            <span className="font-medium">
+                              Generation Rules:
+                            </span>{" "}
+                            <pre className="bg-gray-100 px-2 py-1 rounded whitespace-pre-wrap break-words text-xs">
                               {detail.dynamicInfo.rules}
                             </pre>
                           </p>
                         )}
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4 mt-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Selected Answer</p>
-                        <p className="mt-1">{detail.selected_option || 'Not answered'}</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Selected Answer
+                        </p>
+                        <p className="mt-1 break-words">
+                          {detail.selected_option || "Not answered"}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Correct Answer</p>
-                        <p className="mt-1">{detail.correct_option}</p>
+                        <p className="text-sm font-medium text-gray-500">
+                          Correct Answer
+                        </p>
+                        <p className="mt-1 break-words">
+                          {detail.correct_option}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -433,5 +616,5 @@ export default function ResultsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
