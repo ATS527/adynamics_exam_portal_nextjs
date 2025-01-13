@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Loader2, Plus, Download } from 'lucide-react'
+import { Loader2, Plus, Download, Pen, Pencil, Eye, CircleHelp, MessageCircleQuestion, Text, FolderPen, CloudUpload } from 'lucide-react'
 import { parseQuestionXLSX } from '@/lib/xlsx-parser'
 import {
   Dialog,
@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface QuestionBank {
   id: string
@@ -160,7 +161,7 @@ export default function QuestionBankPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-start items-center">
-        <h1 className="text-2xl font-bold">Question Banks</h1>
+        <h1 className="text-2xl font-bold flex items-center mt-4 mb-2"><CircleHelp className='mr-2'/> Question Banks</h1>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <TooltipProvider>
             <Tooltip>
@@ -172,14 +173,14 @@ export default function QuestionBankPage() {
                 </TooltipTrigger>
               </DialogTrigger>
               <TooltipContent className="lg:mt-8">
-                Create Question Bank
+                 Create Question Bank
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Create Question Bank</DialogTitle>
+              <DialogTitle className='flex items-center'><CircleHelp className='mr-2 w-5'/> Create Question Bank</DialogTitle>
               <DialogDescription>
                 Create a new question bank and optionally import questions from
                 an Excel file.
@@ -192,7 +193,7 @@ export default function QuestionBankPage() {
             )}
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title" className='flex items-center'><FolderPen className='mr-1 w-4'/> Title</Label>
                 <Input
                   id="title"
                   value={newBankTitle}
@@ -201,7 +202,7 @@ export default function QuestionBankPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className='flex items-center'><Text className='mr-1 w-4'/> Description</Label>
                 <Textarea
                   id="description"
                   value={newBankDescription}
@@ -210,9 +211,10 @@ export default function QuestionBankPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Questions File (Optional)</Label>
+                <Label htmlFor='file-upload' className='flex items-center'><CloudUpload className='mr-1 w-4'/> Questions File (Optional)</Label>
                 <div className="flex items-center gap-4">
                   <Input
+                    id='file-upload'
                     type="file"
                     accept=".xlsx"
                     onChange={(e) =>
@@ -258,28 +260,33 @@ export default function QuestionBankPage() {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {questionBanks.map((bank) => (
-          <div
+          <Card
             key={bank.id}
-            className="p-4 border rounded-lg shadow hover:shadow-md transition-shadow"
           >
-            <h2 className="text-xl font-semibold">{bank.title}</h2>
-            {bank.description && (
-              <p className="text-gray-600 mt-2">{bank.description}</p>
-            )}
-            <div className="mt-4 flex gap-2">
+            <CardHeader>
+              <CardTitle>
+                <h2 className="text-xl font-semibold flex items-center"><MessageCircleQuestion className='mr-2'/> {bank.title}</h2>
+              </CardTitle>
+              <CardDescription>
+                {bank.description && (
+                  <p className="text-gray-600 mt-2">{bank.description}</p>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className='flex justify-end gap-3 mt-auto'>
               <Button
                 variant="outline"
                 onClick={() => handleViewQuestions(bank.id)}
               >
-                View Questions
+                <Eye className="mr-2 h-4 w-4" /> View Questions
               </Button>
-              <Button variant="outline" onClick={() => handleEditBank(bank.id)}>
-                Edit
+              <Button variant="default" onClick={() => handleEditBank(bank.id)}>
+                <Pencil className="mr-2 h-4 w-4" /> Edit
               </Button>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         ))}
       </div>
 
