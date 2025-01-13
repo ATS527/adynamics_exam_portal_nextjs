@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface QuestionBank {
   id: string
@@ -158,19 +159,30 @@ export default function QuestionBankPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-start items-center">
         <h1 className="text-2xl font-bold">Question Banks</h1>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Create Question Bank
-            </Button>
-          </DialogTrigger>
+          <TooltipProvider>
+            <Tooltip>
+              <DialogTrigger asChild>
+                <TooltipTrigger className="fixed right-6 bottom-6 lg:right-10 lg:bottom-10">
+                  <Button className="rounded-full px-5 py-7">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+              </DialogTrigger>
+              <TooltipContent className="lg:mt-8">
+                Create Question Bank
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create Question Bank</DialogTitle>
               <DialogDescription>
-                Create a new question bank and optionally import questions from an Excel file.
+                Create a new question bank and optionally import questions from
+                an Excel file.
               </DialogDescription>
             </DialogHeader>
             {error && (
@@ -203,31 +215,39 @@ export default function QuestionBankPage() {
                   <Input
                     type="file"
                     accept=".xlsx"
-                    onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setSelectedFile(e.target.files?.[0] || null)
+                    }
                     className="flex-1"
                   />
                   <Button
                     variant="outline"
-                    onClick={() => window.open('/templates/Adynamics Question Template.xlsx')}
+                    onClick={() =>
+                      window.open("/templates/Adynamics Question Template.xlsx")
+                    }
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Template
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Upload an Excel file with questions. Download the template to see the required format.
+                  Upload an Excel file with questions. Download the template to
+                  see the required format.
                 </p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                setIsCreateDialogOpen(false)
-                setError(null)
-                setSelectedFile(null)
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  setError(null);
+                  setSelectedFile(null);
+                }}
+              >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateBank}
                 disabled={!newBankTitle.trim()}
               >
@@ -249,7 +269,10 @@ export default function QuestionBankPage() {
               <p className="text-gray-600 mt-2">{bank.description}</p>
             )}
             <div className="mt-4 flex gap-2">
-              <Button variant="outline" onClick={() => handleViewQuestions(bank.id)}>
+              <Button
+                variant="outline"
+                onClick={() => handleViewQuestions(bank.id)}
+              >
                 View Questions
               </Button>
               <Button variant="outline" onClick={() => handleEditBank(bank.id)}>
@@ -266,5 +289,5 @@ export default function QuestionBankPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
