@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Loader2, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react'
+import CopyrightFooter from '@/components/CopyrightFooter'
 
 
 interface Question {
@@ -764,11 +765,11 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <div className="relative container mx-auto w-full">
-
+    <>
+    <div className="relative container mx-auto w-full flex flex-col sm:justify-center md:items-center sm:pr-6">
       {/* specific question and confirmation badge */}
-      <div className='px-4 mt-3'>
-        <div className="flex justify-between items-center mb-4">
+      {/* <div className="px-4 mt-3">
+        <div className="hidden sm:flex justify-between items-center mb-4">
           <h3 className="flex flex-col text-lg font-medium">
             Question {currentQuestionIndex + 1}
             {currentQuestion?.question_type !== "static" && (
@@ -777,51 +778,9 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               </span>
             )}
           </h3>
-          <Dialog>
-            <DialogTrigger>
-              <Button className='p-2 sm:hidden' variant={"outline"}>
-                <ChevronDown />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='w-[90%] rounded-lg'>
-              <DialogHeader>
-                <DialogTitle className='text-start'>
-                  Select Question
-                </DialogTitle>
-              </DialogHeader>
-
-              <div className="flex flex-wrap gap-2">
-              {exam.exam_questions.map((eq, index) => {
-                const isAnswered = answers[eq.question.id] !== undefined;
-                const isConfirmed = confirmedQuestions.has(eq.question.id);
-                const isCurrent = index === currentQuestionIndex;
-
-                return (
-                  <>
-                    <Button
-                      key={eq.question.id}
-                      variant={
-                        isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
-                      }
-                      className={cn(
-                        "w-10 h-10",
-                        isCurrent && "ring-2 ring-primary",
-                        isConfirmed && "bg-green-500 hover:bg-green-600"
-                      )}
-                      onClick={() => handleQuestionChange(index)}
-                    >
-                      {index + 1}
-                    </Button>
-                  </>
-                )
-              })}
-            </div>
-
-            </DialogContent>
-          </Dialog>
 
           <Badge
-          className='hidden sm:inline-flex'
+            className="hidden sm:inline-flex"
             variant={
               confirmedQuestions.has(currentQuestion?.id || "")
                 ? "default"
@@ -833,59 +792,129 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               : "Not Confirmed"}
           </Badge>
         </div>
-      </div>
+      </div> */}
 
       {/* question numbers */}
-      <div className="hidden sm:flex flex-wrap gap-2">
-        {exam.exam_questions.map((eq, index) => {
-          const isAnswered = answers[eq.question.id] !== undefined;
-          const isConfirmed = confirmedQuestions.has(eq.question.id);
-          const isCurrent = index === currentQuestionIndex;
+      <div className='flex items-center justify-center w-full lg:max-w-7xl'>
+          <div className="my-3 mt-5 hidden md:flex flex-wrap gap-2 sm:items-start sm:justify-start">
+            {exam.exam_questions.map((eq, index) => {
+              const isAnswered = answers[eq.question.id] !== undefined;
+              const isConfirmed = confirmedQuestions.has(eq.question.id);
+              const isCurrent = index === currentQuestionIndex;
 
-          return (
-            <Button
-              key={eq.question.id}
-              variant={
-                isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
-              }
-              className={cn(
-                "w-10 h-10",
-                isCurrent && "ring-2 ring-primary",
-                isConfirmed && "bg-green-500 hover:bg-green-600"
-              )}
-              onClick={() => handleQuestionChange(index)}
-            >
-              {index + 1}
-            </Button>
-          );
-        })}
+              return (
+                <Button
+                  key={eq.question.id}
+                  variant={
+                    isConfirmed ? "default" : isAnswered ? "secondary" : "outline"
+                  }
+                  className={cn(
+                    "w-10 h-10",
+                    isCurrent && "ring-2 ring-primary",
+                    isConfirmed && "bg-main hover:bg-mainDark"
+                  )}
+                  onClick={() => handleQuestionChange(index)}
+                >
+                  {index + 1}
+                </Button>
+              );
+            })}
+          </div>
       </div>
 
+
       {/* exam attending card */}
-      <Card className="max-w-4xl mx-auto">
+      <Card className="max-w-4xl w-full border-none shadow-none sm:rounded-md sm:border-gray-500">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <div className="space-y-2">
-              <div>
+              <div className='flex flex-col'>
                 Question {currentQuestionIndex + 1} of{" "}
                 {exam.exam_questions.length}
+                {currentQuestion?.question_type !== "static" && (
+                  <span className="mt-1 sm:text-sm text-xs text-gray-500">
+                    (Dynamic Question)
+                  </span>
+                )}
               </div>
               <div className="text-sm text-muted-foreground">
                 Exam Duration: {Math.floor((timeLeft ?? 0) / 60)}:
                 {((timeLeft ?? 0) % 60).toString().padStart(2, "0")}
               </div>
             </div>
-            {forceTimeLeft !== null && forceTimeLeft > 0 && (
-              <div
-                className={cn(
-                  "text-sm font-medium",
-                  forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
-                )}
+            <div className='flex flex-col items-end justify-center gap-1'>
+              <Badge
+                className="hidden md:inline-flex"
+                variant={
+                  confirmedQuestions.has(currentQuestion?.id || "")
+                    ? "default"
+                    : "secondary"
+                }
               >
-                Question Time: {Math.floor(forceTimeLeft / 60)}:
-                {(forceTimeLeft % 60).toString().padStart(2, "0")}
-              </div>
-            )}
+                {confirmedQuestions.has(currentQuestion?.id || "")
+                  ? "Confirmed"
+                  : "Not Confirmed"}
+              </Badge>
+              <Dialog>
+                <DialogTrigger>
+                  <Button className="p-2 md:hidden" variant={"outline"}>
+                    <ChevronDown />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90%] rounded-lg">
+                  <DialogHeader>
+                    <DialogTitle className="text-start">
+                      Select Question
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <div className="flex flex-wrap gap-2">
+                    {exam.exam_questions.map((eq, index) => {
+                      const isAnswered = answers[eq.question.id] !== undefined;
+                      const isConfirmed = confirmedQuestions.has(
+                        eq.question.id
+                      );
+                      const isCurrent = index === currentQuestionIndex;
+
+                      return (
+                        <>
+                          <Button
+                            key={eq.question.id}
+                            variant={
+                              isConfirmed
+                                ? "default"
+                                : isAnswered
+                                ? "secondary"
+                                : "outline"
+                            }
+                            className={cn(
+                              "w-10 h-10",
+                              isCurrent && "ring-2 ring-primary",
+                              isConfirmed && "bg-main hover:bg-mainDark"
+                            )}
+                            onClick={() => handleQuestionChange(index)}
+                          >
+                            {index + 1}
+                          </Button>
+                        </>
+                      );
+                    })}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {forceTimeLeft !== null && forceTimeLeft > 0 && (
+                <div
+                  className={cn(
+                    "text-sm font-medium",
+                    forceTimeLeft <= 10 ? "text-red-500" : "text-gray-500"
+                  )}
+                >
+                  Question Time: {Math.floor(forceTimeLeft / 60)}:
+                  {(forceTimeLeft % 60).toString().padStart(2, "0")}
+                </div>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
 
@@ -898,12 +927,14 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         <CardFooter className="flex justify-between">
           <div className="space-x-2">
             <Button
+              className="hover:bg-main"
               onClick={() => handleQuestionChange(currentQuestionIndex - 1)}
               disabled={currentQuestionIndex === 0 || isNavigationLocked}
             >
               Previous
             </Button>
             <Button
+              className="hover:bg-main"
               onClick={() => handleQuestionChange(currentQuestionIndex + 1)}
               disabled={
                 currentQuestionIndex === exam.exam_questions.length - 1 ||
@@ -957,16 +988,16 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       </Dialog>
 
       {submissionError && (
-        <Alert variant="destructive" className="mt-4">
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant="destructive" className="w-[300px] absolute left-1/2 right-1/2 -translate-x-1/2 mt-4 bg-destructive border-destructive text-white">
+          <AlertCircle className="h-4 w-4" style={{color: 'white'}}/>
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{submissionError}</AlertDescription>
         </Alert>
       )}
 
       {submissionSuccess && (
-        <Alert variant="default" className="mt-4">
-          <CheckCircle className="h-4 w-4" />
+        <Alert variant="default" className="w-[300px] absolute left-1/2 right-1/2 -translate-x-1/2 mt-4 bg-green-500 border-green-500 text-white">
+          <CheckCircle className="h-4 w-4" style={{color: 'white'}} />
           <AlertTitle>Success</AlertTitle>
           <AlertDescription>
             Your exam has been submitted successfully. Redirecting to
@@ -975,5 +1006,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
         </Alert>
       )}
     </div>
+    <CopyrightFooter/>
+    </>
   );
 }

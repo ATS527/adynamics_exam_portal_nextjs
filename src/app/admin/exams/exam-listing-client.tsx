@@ -23,7 +23,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, CircleHelp, ClipboardPenLine } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface Exam {
   id: string;
@@ -114,13 +116,21 @@ export function ExamListingClient() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Exams</h1>
-        <Button onClick={handleCreateExam}>
-          <Plus className="mr-2 h-4 w-4" /> Create Exam
-        </Button>
-      </div>
+    <div className="container mx-auto px-4 pb-16" style={{ marginTop: "20px" }}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger className="fixed right-6 bottom-6 lg:right-10 lg:bottom-10">
+            <Button
+              className="rounded-full px-5 py-7"
+              onClick={handleCreateExam}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="lg:mt-8">Create Exam</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {error && (
           <div className="col-span-full p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -128,43 +138,57 @@ export function ExamListingClient() {
           </div>
         )}
         {exams.map((exam) => (
-          <Card key={exam.id}>
+          <Card key={exam.id} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{exam.title}</CardTitle>
-              <CardDescription>{exam.description}</CardDescription>
+              <CardTitle className="flex items-center capitalize">
+                <ClipboardPenLine className="mr-1 h-4 w-4" /> {exam.title}
+              </CardTitle>
+              <CardDescription className="text-primary">{exam.description}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p>Number of questions: {exam.question_count}</p>
+            <CardContent className="flex-grow">
+              <p className="text-sm text-gray-600 flex items-center">
+                <CircleHelp className="mr-2 h-4 w-4" />
+                Number of questions &nbsp;
+                <Badge variant={"secondary"}>{exam.question_count}</Badge>
+              </p>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => handleEditExam(exam.id)}>
-                <Pencil className="mr-2 h-4 w-4" /> Edit
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete the exam &quot;{exam.title}&quot; and all associated data.
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDeleteExam(exam.id)}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            <CardFooter className="mt-auto">
+              <div className="flex justify-between w-full">
+                <Button
+                  variant="outline"
+                  onClick={() => handleEditExam(exam.id)}
+                >
+                  <Pencil className="mr-2 h-4 w-4" /> Edit
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Are you sure ?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the exam &quot;{exam.title}
+                        &quot; and all associated data. This action cannot be
+                        undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDeleteExam(exam.id)}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </CardFooter>
           </Card>
         ))}

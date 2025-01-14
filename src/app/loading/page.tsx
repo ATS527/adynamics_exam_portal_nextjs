@@ -1,7 +1,7 @@
-import React from "react";
 import LottieLoader from "@/components/LottieLoader";
+import React from "react";
 
-const Loading = () => {
+const Loader = () => {
   return (
     <>
       <main className="w-full h-screen flex flex-col items-center justify-center">
@@ -21,4 +21,4 @@ const Loading = () => {
   );
 };
 
-export default Loading;
+export default Loader;
