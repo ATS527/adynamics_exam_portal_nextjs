@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, Plus, X } from 'lucide-react'
+import { Dot, Loader2, Plus, X } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 
 interface Question {
   id: string
@@ -180,31 +181,32 @@ export default function EditQuestionClient({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 mt-3">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Edit Question</h1>
       </div>
 
-      <div className="space-y-4">
+      <div>
         <div className="space-y-2">
-          <Label>Question Type</Label>
-          <p className="text-sm font-medium">{questionType}</p>
+          <h2 className='text-lg font-semibold flex items-center'><Dot />Question Type</h2>
+          <Badge variant={"outline"}>{questionType}</Badge>
         </div>
 
         {questionType === 'static' ? (
           <>
-            <div className="space-y-2">
-              <Label>Question Text</Label>
+            <div className="mt-8">
+              <Label className='mb-2 text-lg font-semibold flex items-center'><Dot />Question Text</Label>
               <Textarea
                 value={questionText}
                 onChange={(e) => setQuestionText(e.target.value)}
                 placeholder="Enter your question text"
+                className='h-40 text-sm'
               />
             </div>
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <Label>Options</Label>
+            <div className="">
+              <div className="mt-8 flex justify-between items-center">
+                <Label className='mb-2 text-lg font-semibold flex items-center'><Dot />Options</Label>
                 <Button
                   onClick={() => setOptions([...options, { id: `new-${Date.now()}`, option_text: '', is_correct: false, question_id: questionId }])}
                   size="sm"
@@ -245,44 +247,47 @@ export default function EditQuestionClient({
           </>
         ) : (
           <>
-            <div className="space-y-2">
-              <Label>Question Template</Label>
+            <div className="mt-8">
+              <Label className='text-lg font-semibold flex items-center mb-2 '><Dot />Question Template</Label>
               <Textarea
                 value={template}
                 onChange={(e) => setTemplate(e.target.value)}
                 placeholder="Enter template with variables in {brackets}"
+                className='h-36 text-sm'
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500 mt-3">
                 Example: {getTemplateExample(questionType)}
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Variable Ranges</Label>
+            <div className="mt-8">
+              <Label className='text-lg font-semibold flex items-center mb-2'><Dot />Variable Ranges</Label>
               <Textarea
                 value={variableRanges}
                 onChange={(e) => setVariableRanges(e.target.value)}
                 placeholder="Enter variable ranges in JSON format"
+                className='h-36 text-sm'
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500 mt-3">
                 Example: {getVariableRangesExample(questionType)}
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Option Generation Rules</Label>
+            <div className="mt-8">
+              <Label className='mb-2 text-lg font-semibold flex items-center'><Dot />Option Generation Rules</Label>
               <Textarea
                 value={optionGenerationRules}
                 onChange={(e) => setOptionGenerationRules(e.target.value)}
                 placeholder="Enter option generation rules in JSON format"
+                className='h-36 text-sm'
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500 mt-3">
                 Example: {getOptionRulesExample(questionType)}
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="noOfTimes">Number of Questions to Generate</Label>
+            <div className="mt-8">
+              <Label className='mb-2 text-lg font-semibold flex items-center' htmlFor="noOfTimes"><Dot />Number of Questions to Generate</Label>
               <Input
                 id="noOfTimes"
                 type="number"
@@ -293,7 +298,7 @@ export default function EditQuestionClient({
                 placeholder="Enter number of questions to generate"
                 className="w-full"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-3">
                 How many variations of this question should be generated?
               </p>
             </div>
