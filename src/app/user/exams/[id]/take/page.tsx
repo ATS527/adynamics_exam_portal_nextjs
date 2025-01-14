@@ -766,7 +766,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
 
   return (
     <>
-    <div className="relative container mx-auto w-full flex flex-row-reverse sm:justify-center sm:items-start sm:pr-6">
+    <div className="relative container mx-auto w-full flex flex-col sm:justify-center md:items-center sm:pr-6">
       {/* specific question and confirmation badge */}
       {/* <div className="px-4 mt-3">
         <div className="hidden sm:flex justify-between items-center mb-4">
@@ -795,12 +795,8 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
       </div> */}
 
       {/* question numbers */}
-      <Card className='hidden sm:block max-w-60 mt-[116px]'>
-        <CardHeader>
-          <CardTitle>Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="hidden sm:flex flex-wrap gap-2 sm:items-start sm:justify-start">
+      <div className='flex items-center justify-center w-full lg:max-w-7xl'>
+          <div className="my-3 mt-5 hidden md:flex flex-wrap gap-2 sm:items-start sm:justify-start">
             {exam.exam_questions.map((eq, index) => {
               const isAnswered = answers[eq.question.id] !== undefined;
               const isConfirmed = confirmedQuestions.has(eq.question.id);
@@ -824,8 +820,8 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+      </div>
+
 
       {/* exam attending card */}
       <Card className="max-w-4xl w-full border-none shadow-none sm:rounded-md sm:border-gray-500">
@@ -848,7 +844,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
             </div>
             <div className='flex flex-col items-end justify-center gap-1'>
               <Badge
-                className="hidden sm:inline-flex"
+                className="hidden md:inline-flex"
                 variant={
                   confirmedQuestions.has(currentQuestion?.id || "")
                     ? "default"
@@ -861,7 +857,7 @@ export default function ExamTakingPage({ params }: { params: Promise<{ id: strin
               </Badge>
               <Dialog>
                 <DialogTrigger>
-                  <Button className="p-2 sm:hidden" variant={"outline"}>
+                  <Button className="p-2 md:hidden" variant={"outline"}>
                     <ChevronDown />
                   </Button>
                 </DialogTrigger>
