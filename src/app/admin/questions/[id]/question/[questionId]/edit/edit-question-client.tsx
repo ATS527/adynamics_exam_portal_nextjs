@@ -181,7 +181,7 @@ export default function EditQuestionClient({
   }
 
   return (
-    <div className="space-y-6 mt-3">
+    <div className="space-y-6 mt-3 max-w-4xl mx-auto">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Edit Question</h1>
       </div>
