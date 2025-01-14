@@ -93,31 +93,33 @@ function QuestionBankEditClient({ id }: { id: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Edit Question Bank</h1>
+    <div className="space-y-6 flex flex-col items-center">
+      <div className="w-full max-w-2xl flex items-start">
+        <h1 className="text-2xl text-start font-bold mt-5 mb-3">Edit Question Bank</h1>
       </div>
 
-      <div className="space-y-4 max-w-2xl">
-        <div>
+      <div className="space-y-4 max-w-2xl w-full">
+        <div className='w-full'>
           <Label htmlFor="title">Title</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter bank title"
+            className='w-full'
           />
         </div>
-        <div>
+        <div className='w-full'>
           <Label htmlFor="description">Description</Label>
           <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Enter bank description"
+             className='w-full'
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end">
           <Button
             variant="outline"
             onClick={() => router.push('/admin/questions')}
