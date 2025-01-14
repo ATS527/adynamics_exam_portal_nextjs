@@ -205,9 +205,9 @@ export function CreateExamClient() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-6 space-y-6 max-w-4xl">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Create New Exam</h1>
+        <h1 className="text-2xl font-bold">Create Exam</h1>
       </div>
 
       {error && (
@@ -227,6 +227,7 @@ export function CreateExamClient() {
             required
           />
         </div>
+
         <div>
           <Label htmlFor="description">Description</Label>
           <Textarea
@@ -237,35 +238,41 @@ export function CreateExamClient() {
             rows={3}
           />
         </div>
+
         <div>
           <Label>Instructions</Label>
           {formData.instructions.map((instruction, index) => (
-            <div key={index} className="flex items-center space-x-2 mt-2">
+            <div key={index} className="flex items-center space-x-2 mt-2 border shadow-sm rounded-lg">
               <Input
                 value={instruction}
-                onChange={(e) =>
-                  handleInstructionChange(index, e.target.value)
-                }
+                onChange={(e) => handleInstructionChange(index, e.target.value)}
                 placeholder={`Instruction ${index + 1}`}
+                className="border-none shadow-none rounded-r-none"
               />
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 onClick={() => removeInstruction(index)}
+                className="rounded-l-none hover:bg-destructive"
+                style={{marginLeft:"0"}}
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addInstruction}
-            className="mt-2"
-          >
-            <Plus className="h-4 w-4 mr-2" /> Add Instruction
-          </Button>
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="default"
+              onClick={addInstruction}
+              className="mt-3 hover:bg-main"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Add Instruction
+            </Button>
+          </div>
         </div>
+
         <div>
           <Label htmlFor="message">Message</Label>
           <Textarea
@@ -277,71 +284,88 @@ export function CreateExamClient() {
             placeholder="Enter a message for the exam takers"
           />
         </div>
-        <div>
-          <Label htmlFor="start_time">Start Time</Label>
-          <Input
-            id="start_time"
-            name="start_time"
-            type="datetime-local"
-            value={formData.start_time}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="end_time">End Time</Label>
-          <Input
-            id="end_time"
-            name="end_time"
-            type="datetime-local"
-            value={formData.end_time}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="duration_minutes">Duration (minutes)</Label>
-          <Input
-            id="duration_minutes"
-            name="duration_minutes"
-            type="number"
-            value={formData.duration_minutes}
-            onChange={handleNumberInputChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="force_time">Force Time (seconds)</Label>
-          <Input
-            id="force_time"
-            name="force_time"
-            type="number"
-            value={formData.force_time}
-            onChange={handleNumberInputChange}
-            required
-          />
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="is_premium"
-            checked={formData.is_premium}
-            onCheckedChange={handleSwitchChange}
-          />
-          <Label htmlFor="is_premium">Premium Exam</Label>
-        </div>
-        {formData.is_premium && (
-          <div>
-            <Label htmlFor="cost">Cost</Label>
-            <Input
-              id="cost"
-              name="cost"
-              type="number"
-              value={formData.cost || ""}
-              onChange={handleNumberInputChange}
-              required
-            />
+
+        <div className="sm:flex w-full gap-6">
+          <div className="sm:flex items-center flex-col w-full gap-6">
+            <div className="w-full">
+              <Label htmlFor="start_time">Start Time</Label>
+              <Input
+                id="start_time"
+                name="start_time"
+                type="datetime-local"
+                value={formData.start_time}
+                onChange={handleInputChange}
+                required
+                className="w-full"
+              />
+            </div>
+
+            <div className="w-full mt-6 sm:mt-0">
+              <Label htmlFor="end_time">End Time</Label>
+              <Input
+                id="end_time"
+                name="end_time"
+                type="datetime-local"
+                value={formData.end_time}
+                onChange={handleInputChange}
+                required
+                className="w-full"
+              />
+            </div>
           </div>
-        )}
+
+          <div className="sm:flex items-center flex-col w-full gap-6">
+            <div className="w-full mt-6 sm:mt-0">
+              <Label htmlFor="duration_minutes">Duration (minutes)</Label>
+              <Input
+                id="duration_minutes"
+                name="duration_minutes"
+                type="number"
+                value={formData.duration_minutes}
+                onChange={handleNumberInputChange}
+                required
+              />
+            </div>
+
+            <div className="w-full mt-6 sm:mt-0">
+              <Label htmlFor="force_time">Force Time (seconds)</Label>
+              <Input
+                id="force_time"
+                name="force_time"
+                type="number"
+                value={formData.force_time}
+                onChange={handleNumberInputChange}
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between space-x-2">
+          <div className="flex items-center space-x-2 mt-6">
+            <Switch
+              id="is_premium"
+              checked={formData.is_premium}
+              onCheckedChange={handleSwitchChange}
+            />
+            <Label htmlFor="is_premium">Premium Exam</Label>
+          </div>
+            <div className="w-2/3">
+              <Label htmlFor="cost" className={`${!formData.is_premium && "text-muted"}`}>Cost</Label>
+              <Input
+                id="cost"
+                name="cost"
+                type="number"
+                value={formData.cost || ""}
+                onChange={handleNumberInputChange}
+                required = { formData.is_premium && true }
+                readOnly = { formData.is_premium && true }
+                disabled = { !formData.is_premium && true }
+              />
+            </div>
+        </div>
+
+
         <div>
           <h2 className="text-xl font-bold mb-4">Select Questions</h2>
           <div className="mb-4">
@@ -357,6 +381,7 @@ export function CreateExamClient() {
               Select All Questions
             </Label>
           </div>
+
           {questionBanks.map((bank) => (
             <Card key={bank.id} className="mb-4">
               <CardHeader>
@@ -367,10 +392,7 @@ export function CreateExamClient() {
                       selectedQuestions.includes(q.id)
                     )}
                     onCheckedChange={(checked) =>
-                      handleSelectAllQuestionsFromBank(
-                        bank.id,
-                        checked as boolean
-                      )
+                      handleSelectAllQuestionsFromBank(bank.id, checked as boolean)
                     }
                   />
                   <Label htmlFor={`bank-${bank.id}`} className="ml-2">
@@ -382,7 +404,7 @@ export function CreateExamClient() {
                 {bank.questions.map((question) => (
                   <div
                     key={question.id}
-                    className="flex items-center space-x-2 mt-2"
+                    className="flex items-start space-x-2 mt-5"
                   >
                     <Checkbox
                       id={`question-${question.id}`}
@@ -405,7 +427,9 @@ export function CreateExamClient() {
             </Card>
           ))}
         </div>
-        <Button type="submit">Create Exam</Button>
+          <div className="flex justify-end">
+            <Button type="submit">Create exam</Button>
+          </div>
       </form>
     </div>
   );
