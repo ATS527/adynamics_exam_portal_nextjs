@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -431,281 +431,378 @@ export function QuestionBankViewClient({ id }: { id: string }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">{questionBank.title}</h1>
-          {questionBank.description && (
-            <p className="text-gray-600 mt-1">{questionBank.description}</p>
-          )}
-        </div>
-        <div className="flex gap-4">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Question Bank
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete the question bank &quot;{questionBank.title}&quot; and all its questions.
-                  This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteQuestionBank}
-                  className="bg-red-600 hover:bg-red-700"
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold truncate">
+              {questionBank.title}
+            </h1>
+            {questionBank.description && (
+              <p className="text-gray-600 mt-1">{questionBank.description}</p>
+            )}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="border border-destructive text-destructive hover:text-white hover:bg-destructive w-full sm:w-auto"
                 >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> Add Question
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-              <DialogHeader className="sticky top-0 bg-white z-10 pb-2">
-                <DialogTitle>Add Question</DialogTitle>
-                <DialogDescription>
-                  Add a new question to this question bank.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="overflow-y-auto flex-grow pr-4">
-                <div className="space-y-4">
-                  {newQuestionType === 'static' ? (
-                    <>
-                      <div>
-                        <Label htmlFor="questionText">Question Text</Label>
-                        <Textarea
-                          id="questionText"
-                          value={newQuestionText}
-                          onChange={(e) => setNewQuestionText(e.target.value)}
-                          placeholder="Enter question text"
-                          className="mb-4"
-                        />
-                      </div>
-                      <div className="space-y-4">
-                        <Label>Options</Label>
-                        {staticOptions.map((option, index) => (
-                          <div key={index} className="flex items-center space-x-2">
-                            <Textarea
-                              value={option.option_text}
-                              onChange={(e) => updateStaticOption(index, 'option_text', e.target.value)}
-                              placeholder={`Option ${index + 1}`}
-                              className="flex-grow"
-                            />
-                            <div className="flex items-center">
-                              <Label htmlFor={`correct-${index}`} className="mr-2">Correct</Label>
-                              <input
-                                id={`correct-${index}`}
-                                type="checkbox"
-                                checked={option.is_correct}
-                                onChange={(e) => {
-                                  // Uncheck all other options when one is checked
-                                  const newOptions = staticOptions.map((opt, i) => ({
-                                    ...opt,
-                                    is_correct: i === index ? e.target.checked : false
-                                  }))
-                                  setStaticOptions(newOptions)
-                                }}
+                  <Trash2 className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline-block">
+                    Delete Question Bank
+                  </span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete the question bank &quot;
+                    {questionBank.title}&quot; and all its questions. This
+                    action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteQuestionBank}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto">
+                  <Plus className="mr-2 h-4 w-4" /> Add Question
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className="sm:max-w-2xl max-h-[95vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Add Question</DialogTitle>
+                  <DialogDescription>
+                    Add a new question to this question bank.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="flex-1 overflow-y-auto px-6">
+                  <div className="space-y-6 py-4">
+                    {newQuestionType === "static" ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="questionText">Question Text</Label>
+                          <Textarea
+                            id="questionText"
+                            value={newQuestionText}
+                            onChange={(e) => setNewQuestionText(e.target.value)}
+                            placeholder="Enter question text"
+                          />
+                        </div>
+
+                        <div className="space-y-4">
+                          <Label>Options</Label>
+                          {staticOptions.map((option, index) => (
+                            <div
+                              key={index}
+                              className="grid grid-cols-[1fr,auto] gap-4 items-start"
+                            >
+                              <Textarea
+                                value={option.option_text}
+                                onChange={(e) =>
+                                  updateStaticOption(
+                                    index,
+                                    "option_text",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder={`Option ${index + 1}`}
                               />
+                              <div className="flex items-center space-x-2 pt-2">
+                                <Label htmlFor={`correct-${index}`}>
+                                  Correct
+                                </Label>
+                                <input
+                                  id={`correct-${index}`}
+                                  type="checkbox"
+                                  checked={option.is_correct}
+                                  onChange={(e) => {
+                                    const newOptions = staticOptions.map(
+                                      (opt, i) => ({
+                                        ...opt,
+                                        is_correct:
+                                          i === index
+                                            ? e.target.checked
+                                            : false,
+                                      })
+                                    );
+                                    setStaticOptions(newOptions);
+                                  }}
+                                  className="h-4 w-4"
+                                />
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="template">Question Template</Label>
+                          <Textarea
+                            id="template"
+                            value={template}
+                            onChange={(e) => setTemplate(e.target.value)}
+                            placeholder={getTemplateExample(newQuestionType)}
+                            className="min-h-[100px]"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Example template for {newQuestionType}:{" "}
+                            {getTemplateExample(newQuestionType)}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="variableRanges">
+                            Variable Ranges (JSON)
+                          </Label>
+                          <Textarea
+                            id="variableRanges"
+                            value={variableRanges}
+                            onChange={(e) => setVariableRanges(e.target.value)}
+                            placeholder={getVariableRangesExample(
+                              newQuestionType
+                            )}
+                            className="min-h-[100px]"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Example variable ranges for {newQuestionType}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="optionGenerationRules">
+                            Option Generation Rules (JSON)
+                          </Label>
+                          <Textarea
+                            id="optionGenerationRules"
+                            value={optionGenerationRules}
+                            onChange={(e) =>
+                              setOptionGenerationRules(e.target.value)
+                            }
+                            placeholder={getOptionRulesExample(newQuestionType)}
+                            className="min-h-[150px]"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Specify options with their equations, units, and
+                            correctness
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="noOfTimes">
+                            Number of Questions to Generate
+                          </Label>
+                          <Input
+                            id="noOfTimes"
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={noOfTimes}
+                            onChange={(e) =>
+                              setNoOfTimes(Number(e.target.value))
+                            }
+                            placeholder="Enter number of questions to generate"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            How many variations of this question should be
+                            generated?
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="questionType">Question Type</Label>
+                      <select
+                        id="questionType"
+                        value={newQuestionType}
+                        onChange={(e) => {
+                          setNewQuestionType(
+                            e.target.value as
+                              | "static"
+                              | "dynamic"
+                              | "dynamic conditional"
+                              | "dynamic text conditional"
+                          );
+                          setNewQuestionText("");
+                          setStaticOptions([
+                            { option_text: "", is_correct: false },
+                            { option_text: "", is_correct: false },
+                            { option_text: "", is_correct: false },
+                            { option_text: "", is_correct: false },
+                          ]);
+                          setTemplate("");
+                          setVariableRanges("");
+                          setOptionGenerationRules("");
+                        }}
+                        className="w-full rounded-md border border-input px-3 py-2"
+                      >
+                        <option value="static">Static</option>
+                        <option value="dynamic">Dynamic</option>
+                        <option value="dynamic conditional">
+                          Dynamic Conditional
+                        </option>
+                        <option value="dynamic text conditional">
+                          Dynamic Text Conditional
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter className="px-6 py-4 border-t">
+                  <div className="flex justify-end gap-4 w-full">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsCreateDialogOpen(false)}
+                      className="px-4"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleCreateQuestion}
+                      className="px-4 bg-primary text-primary-foreground hover:bg-main"
+                    >
+                      Create
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="col-span-full p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg break-words">
+            {error}
+          </div>
+        )}
+
+        {/* Questions Grid */}
+        <div className="grid gap-4">
+          {questions.map((question) => (
+            <div
+              key={question.id}
+              className="p-4 border rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden"
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start gap-4 w-full">
+                <div className="space-y-2 w-full sm:flex-1 min-w-0">
+                  {question.question_type === "static" ? (
+                    <>
+                      <p className="font-medium break-words">
+                        {question.question_text}
+                      </p>
+                      {question.options && question.options.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium text-gray-600">
+                            Options:
+                          </p>
+                          <ul className="mt-1 space-y-1 w-full overflow-x-auto">
+                            {question.options.map((option) => (
+                              <li
+                                key={option.id}
+                                className={`text-sm break-words ${
+                                  option.is_correct
+                                    ? "text-green-600 font-medium"
+                                    : "text-gray-600"
+                                }`}
+                              >
+                                {option.is_correct && "✓ "}
+                                {option.option_text}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <>
-                      <div>
-                        <Label htmlFor="template">Question Template</Label>
-                        <Textarea
-                          id="template"
-                          value={template}
-                          onChange={(e) => setTemplate(e.target.value)}
-                          placeholder={getTemplateExample(newQuestionType)}
-                          className="min-h-[100px]"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Example template for {newQuestionType}: {getTemplateExample(newQuestionType)}
+                      <div className="break-words">
+                        <p className="font-medium">Template:</p>
+                        <p className="text-sm mt-1 break-words whitespace-pre-wrap">
+                          {question.template}
                         </p>
                       </div>
-                      <div>
-                        <Label htmlFor="variableRanges">Variable Ranges (JSON)</Label>
-                        <Textarea
-                          id="variableRanges"
-                          value={variableRanges}
-                          onChange={(e) => setVariableRanges(e.target.value)}
-                          placeholder={getVariableRangesExample(newQuestionType)}
-                          className="min-h-[100px]"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Example variable ranges for {newQuestionType}
-                        </p>
-                      </div>
-                      <div>
-                        <Label htmlFor="optionGenerationRules">Option Generation Rules (JSON)</Label>
-                        <Textarea
-                          id="optionGenerationRules"
-                          value={optionGenerationRules}
-                          onChange={(e) => setOptionGenerationRules(e.target.value)}
-                          placeholder={getOptionRulesExample(newQuestionType)}
-                          className="min-h-[150px]"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Specify options with their equations, units, and correctness
-                        </p>
-                      </div>
-                      <div>
-                        <Label htmlFor="noOfTimes">Number of Questions to Generate</Label>
-                        <Input
-                          id="noOfTimes"
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={noOfTimes}
-                          onChange={(e) => setNoOfTimes(Number(e.target.value))}
-                          placeholder="Enter number of questions to generate"
-                          className="w-full"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          How many variations of this question should be generated?
+                      <div className="text-sm text-gray-600">
+                        <p>Variables:</p>
+                        <ul className="list-disc list-inside ml-4">
+                          {question.variable_ranges &&
+                            Object.entries(question.variable_ranges).map(
+                              ([variable, range]) => (
+                                <li key={variable} className="break-words">
+                                  {variable}: {range.min} to {range.max}
+                                </li>
+                              )
+                            )}
+                        </ul>
+                        {question.option_generation_rules && (
+                          <div className="mt-2">
+                            <p className="font-medium">
+                              Option Generation Rules:
+                            </p>
+                            <div className="mt-1 text-xs bg-gray-50 p-2 rounded overflow-x-auto max-w-full">
+                              <pre className="whitespace-pre-wrap break-words">
+                                {JSON.stringify(
+                                  question.option_generation_rules,
+                                  null,
+                                  2
+                                )}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+                        <p className="mt-2 break-words">
+                          <span className="font-medium">Correct Answer:</span>{" "}
+                          <span className="break-all">
+                            {question.correct_answer_equation}
+                          </span>
                         </p>
                       </div>
                     </>
                   )}
-                  <div>
-                    <Label htmlFor="questionType">Question Type</Label>
-                    <select
-                      id="questionType"
-                      value={newQuestionType}
-                      onChange={(e) => {
-                        setNewQuestionType(e.target.value as 'static' | 'dynamic' | 'dynamic conditional' | 'dynamic text conditional')
-                        // Reset form fields when type changes
-                        setNewQuestionText('')
-                        setStaticOptions([
-                          { option_text: '', is_correct: false },
-                          { option_text: '', is_correct: false },
-                          { option_text: '', is_correct: false },
-                          { option_text: '', is_correct: false }
-                        ])
-                        setTemplate('')
-                        setVariableRanges('')
-                        setOptionGenerationRules('')
-                      }}
-                      className="w-full border rounded-md p-2"
-                    >
-                      <option value="static">Static</option>
-                      <option value="dynamic">Dynamic</option>
-                      <option value="dynamic conditional">Dynamic Conditional</option>
-                      <option value="dynamic text conditional">Dynamic Text Conditional</option>
-                    </select>
-                  </div>
+                  <p className="text-sm text-gray-500">
+                    Type: {question.question_type}
+                  </p>
                 </div>
-              </div>
-              <DialogFooter className="flex justify-end items-center space-x-2 border-t pt-3 mt-4 bg-gray-50 px-6 py-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  className="mr-2"
+                <Button
+                  variant="default"
+                  onClick={() => handleEditQuestion(question.id)}
+                  className="w-full sm:w-auto whitespace-nowrap"
                 >
-                  Cancel
+                  <Pencil className="w-4 mr-2" /> Edit
                 </Button>
-                <Button 
-                  onClick={handleCreateQuestion}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Create
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {error && (
-          <div className="col-span-full p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-            {error}
-          </div>
-        )}
-        {questions.map((question) => (
-          <div
-            key={question.id}
-            className="p-4 border rounded-lg shadow hover:shadow-md transition-shadow"
-          >
-            <div className="flex justify-between items-start">
-              <div className="space-y-2 flex-1">
-                {question.question_type === 'static' ? (
-                  <>
-                    <p className="font-medium">{question.question_text}</p>
-                    {question.options && question.options.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-gray-600">Options:</p>
-                        <ul className="mt-1 space-y-1">
-                          {question.options.map((option) => (
-                            <li
-                              key={option.id}
-                              className={`text-sm ${
-                                option.is_correct ? 'text-green-600 font-medium' : 'text-gray-600'
-                              }`}
-                            >
-                              {option.is_correct && '✓ '}
-                              {option.option_text}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <p className="font-medium">Template: {question.template}</p>
-                    <div className="text-sm text-gray-600">
-                      <p>Variables:</p>
-                      <ul className="list-disc list-inside ml-4">
-                        {question.variable_ranges && Object.entries(question.variable_ranges).map(([variable, range]) => (
-                          <li key={variable}>
-                            {variable}: {range.min} to {range.max}
-                          </li>
-                        ))}
-                      </ul>
-                      {question.option_generation_rules && (
-                        <div className="mt-2">
-                          <p className="font-medium">Option Generation Rules:</p>
-                          <pre className="mt-1 text-xs bg-gray-50 p-2 rounded">
-                            {JSON.stringify(question.option_generation_rules, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                      <p className="mt-2">Correct Answer: {question.correct_answer_equation}</p>
-                    </div>
-                  </>
-                )}
-                <p className="text-sm text-gray-500">
-                  Type: {question.question_type}
-                </p>
               </div>
-              <Button variant="outline" onClick={() => handleEditQuestion(question.id)}>
-                Edit
-              </Button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
 
-      {questions.length === 0 && (
-        <div className="text-center text-gray-500">
-          No questions found. Add one to get started.
+          {questions.length === 0 && (
+            <div className="text-center text-gray-500 py-8">
+              No questions found. Add one to get started.
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
-  )
+  );
 }
